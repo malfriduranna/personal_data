@@ -55,3 +55,27 @@
 .top-list-sparkline .sparkline {
     flex-shrink: 0; /* Prevent sparkline svg from shrinking */
 }
+
+/* --- Layout for Side-by-Side Charts --- */
+
+.side-by-side-charts {
+    display: flex;          /* Enable flexbox layout */
+    flex-direction: row;    /* Arrange children horizontally (default) */
+    flex-wrap: wrap;        /* Allow items to wrap onto the next line on smaller screens */
+    gap: var(--spacing, 1rem); /* Add space between the chart cards */
+    margin-top: var(--spacing, 1rem); /* Optional: Add space above this row */
+  }
+  
+  /* Style the direct children (the chart cards) within the flex container */
+  .side-by-side-charts > .chart-container {
+    flex: 1; /* Allow cards to grow and shrink equally to fill the space */
+    min-width: 280px; /* Prevent cards from becoming too narrow before wrapping */
+    /* Ensure cards don't have conflicting width/max-width properties that override flex */
+    width: auto;
+    max-width: none;
+  }
+  
+  /* Optional: Adjust if your .card already has conflicting width styles */
+  .side-by-side-charts > .card {
+      /* You might need to override existing width/max-width if necessary */
+  }

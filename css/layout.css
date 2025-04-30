@@ -29,3 +29,142 @@
   box-sizing: border-box;
   padding: 0 10px;
 }
+
+/* --- Existing layout.css content --- */
+.layout {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.visualization-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--spacing) * 2);
+  margin-top: calc(var(--spacing) * 2);
+  align-items: flex-start;
+}
+
+/* --- Refined .row styles --- */
+.row {
+  margin-top: var(--spacing, 1.5rem); /* Add consistent top margin */
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  gap: var(--spacing, 1.5rem); /* Consistent gap between items in the row */
+  width: 100%;
+}
+
+/* Target direct children (cards) within a .row */
+.row > .card {
+  flex: 1; /* Allow cards to grow and shrink equally */
+  min-width: 300px; /* Prevent cards getting too small before wrapping - adjust as needed */
+  /* Reset any fixed width/max-width that might interfere with flex */
+  width: auto;
+  max-width: none;
+}
+
+
+/* --- Remove or comment out these if not needed elsewhere --- */
+/*
+.full_width {
+  flex: 1 1 100%;
+}
+
+.half_width {
+  flex: 1 1 50%;
+  max-width: 50%;
+  box-sizing: border-box;
+  padding: 0 10px;
+}
+*/
+
+/* --- START: Specific styles for the main chart + top lists section (Optional Refinement) --- */
+/* This uses flexbox to put the main chart on left, top lists on right */
+.calendar-top-section {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping */
+    gap: var(--spacing, 1.5rem);
+    align-items: flex-start; /* Align items to the top */
+}
+
+.calendar-top-section > .main-chart-wrapper {
+    flex: 2; /* Make main chart wider, e.g., takes 2/3rds */
+    min-width: 400px; /* Adjust min-width */
+}
+
+.calendar-top-section > .top-lists-wrapper {
+    flex: 1; /* Make top lists narrower, e.g., takes 1/3rd */
+    display: flex;
+    flex-direction: column; /* Stack top lists vertically */
+    gap: var(--spacing, 1.5rem);
+    min-width: 250px; /* Adjust min-width */
+}
+
+/* Ensure top list items within the wrapper take full width of the wrapper */
+.top-lists-wrapper > .top-list-container {
+    width: 100%;
+}
+/* --- END: Specific styles for the main chart + top lists section --- */
+
+/* --- Existing layout.css content --- */
+.layout {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.visualization-area { /* Might not be used anymore, review if needed */
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--spacing) * 2);
+  margin-top: calc(var(--spacing) * 2);
+  align-items: flex-start;
+}
+
+/* --- Styles for Sections (Optional: Add consistent spacing) --- */
+.dashboard-section {
+    margin-bottom: var(--spacing, 1.5rem); /* Add space below each section */
+}
+
+
+/* --- General Row Styles --- */
+.row {
+  margin-top: var(--spacing, 1.5rem); /* Spacing above rows */
+  display: flex;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  gap: var(--spacing, 1.5rem); /* Consistent gap between items in the row */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Target direct children (cards) within ANY .row */
+.row > .card {
+  flex: 1; /* Allow cards to grow and shrink equally */
+  min-width: 280px; /* Prevent cards getting too small before wrapping - adjust as needed */
+  width: auto; /* Let flexbox handle width */
+  max-width: none; /* Remove potential constraints */
+  box-sizing: border-box;
+}
+
+/* --- Styles for Main Chart Container (if needed) --- */
+.main-trend-section > .main-chart-wrapper {
+    width: 100%; /* Ensure it spans full width if default isn't enough */
+    box-sizing: border-box;
+}
+
+
+/* --- *** REMOVE THESE OLD RULES from previous attempts *** --- */
+/*
+.side-by-side-charts { ... }
+.side-by-side-charts > .chart-container { ... }
+.side-by-side-charts > .card { ... }
+
+.calendar-top-section { ... }
+.calendar-top-section > .main-chart-wrapper { ... }
+.calendar-top-section > .top-lists-wrapper { ... }
+.top-lists-wrapper > .top-list-container { ... }
+
+.full_width { ... }
+.half_width { ... }
+*/
+/* --- End of rules to remove --- */
