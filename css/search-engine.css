@@ -16,6 +16,15 @@
   border: 1px solid #ccc;
 }
 
+#artistDropdown {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#artistDropdown li.highlight {
+  background-color: #eee;
+}
+
 /* 💬 Dropdown styling */
 .dropdown_list {
   position: absolute;

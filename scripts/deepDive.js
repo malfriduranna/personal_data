@@ -6,12 +6,13 @@ let currentArtistName = "";
  ***********************/
 function updateTimeControls(artistData, artistName) {
   const dates = artistData.map((d) => new Date(d.ts));
-  const minDate = new Date(Math.min.apply(null, dates));
-  const maxDate = new Date(Math.max.apply(null, dates));
+  const minDate = new Date(Math.min(...dates));
+  const maxDate = new Date(Math.max(...dates));
   const formatDate = (d) => d.toISOString().split("T")[0];
 
   const startDateInput = document.getElementById("startDate");
   const endDateInput = document.getElementById("endDate");
+
   startDateInput.value = formatDate(minDate);
   endDateInput.value = formatDate(maxDate);
   startDateInput.min = formatDate(minDate);
@@ -22,18 +23,16 @@ function updateTimeControls(artistData, artistName) {
   const yearSelect = document.getElementById("yearSelect");
   yearSelect.innerHTML = "";
 
-  // Get unique years from the artist data
+  // Populate year dropdown
   const uniqueYears = Array.from(
     new Set(artistData.map((d) => new Date(d.ts).getFullYear()))
   ).sort((a, b) => a - b);
 
-  // Add "All Years" option
   const defaultOption = document.createElement("option");
   defaultOption.value = "";
   defaultOption.text = "All Years";
   yearSelect.appendChild(defaultOption);
 
-  // Add each year as an option
   uniqueYears.forEach((year) => {
     const option = document.createElement("option");
     option.value = year;
@@ -41,14 +40,31 @@ function updateTimeControls(artistData, artistName) {
     yearSelect.appendChild(option);
   });
 
-  // When a year is selected, update date inputs + charts immediately
+  // Auto-update charts when date range changes
+  function handleDateChange() {
+    const start = new Date(startDateInput.value);
+    const end = new Date(endDateInput.value);
+    if (isNaN(start) || isNaN(end)) return;
+
+    const filteredData = window.allParsedData.filter((d) => {
+      const date = new Date(d.ts);
+      return date >= start && date <= end;
+    });
+
+    updateAllCharts(filteredData, artistName);
+  }
+
+  startDateInput.addEventListener("change", handleDateChange);
+  endDateInput.addEventListener("change", handleDateChange);
+
+  // When a year is selected, update date inputs and charts
   yearSelect.addEventListener("change", function () {
     const selectedYear = parseInt(this.value);
     let start, end;
 
     if (!isNaN(selectedYear)) {
-      start = new Date(selectedYear, 0, 2); // Jan 1
-      end = new Date(selectedYear, 11, 32); // Dec 31
+      start = new Date(selectedYear, 0, 1);
+      end = new Date(selectedYear, 11, 31, 23, 59, 59);
     } else {
       start = minDate;
       end = maxDate;
@@ -57,32 +73,21 @@ function updateTimeControls(artistData, artistName) {
     startDateInput.value = formatDate(start);
     endDateInput.value = formatDate(end);
 
-    const filteredData = window.allParsedData.filter((d) => {
-      const date = new Date(d.ts);
-      return date >= start && date <= end;
-    });
-
-    updateAllCharts(filteredData, artistName);
+    handleDateChange();
   });
 
-  // Reset controls
+  // Optional reset range button
   const resetButton = document.getElementById("resetRangeBtn");
   if (resetButton) {
     resetButton.addEventListener("click", function () {
       yearSelect.value = "";
       startDateInput.value = formatDate(minDate);
       endDateInput.value = formatDate(maxDate);
-
-      const filteredData = window.allParsedData.filter((d) => {
-        const date = new Date(d.ts);
-        return date >= minDate && date <= maxDate;
-      });
-      updateAllCharts(filteredData, artistName);
+      handleDateChange();
     });
-  } else {
-    console.error("Reset Range button not found in the DOM");
   }
 }
+
 
 /***********************
  * Linegraph of peak listenings
@@ -1045,9 +1050,30 @@ function updateScatterPlot(data, artistName) {
     (d) => d.maxMinutesInYear > xThreshold || d.consistency > yThreshold
   );
 
+  // Simple collision detection to avoid label overlaps
+  const placedLabels = [];
+
+  function isTooClose(x1, y1) {
+    const minDistance = 18; // pixels
+    return placedLabels.some(([x2, y2]) => {
+      const dx = x1 - x2;
+      const dy = y1 - y2;
+      return Math.sqrt(dx * dx + dy * dy) < minDistance;
+    });
+  }
+
   svgEl
     .selectAll(".label")
-    .data(outliers, (d) => d.track)
+    .data(
+      outliers.filter((d) => {
+        const px = x(d.maxMinutesInYear);
+        const py = y(d.consistency);
+        if (isTooClose(px, py)) return false;
+        placedLabels.push([px, py]);
+        return true;
+      }),
+      (d) => d.track
+    )
     .join(
       (enter) =>
         enter
@@ -1545,7 +1571,6 @@ function renderSunburstHeader() {
 
 // Global state object
 const drillDownState = { selectedAlbum: null };
-const albumColorMap = new Map();
 const colorScale = d3.scaleOrdinal(d3.schemeSet2);
 
 function hashStringToIndex(str, range) {
@@ -1557,6 +1582,27 @@ function hashStringToIndex(str, range) {
   return Math.abs(hash) % range;
 }
 
+// 🔹 Global: define once
+const albumColorMap = new Map();
+
+function generateDistinctColors(count) {
+  const baseHues = d3.shuffle(
+    Array.from({ length: count }, (_, i) => {
+      const segment = i % 3;
+      if (segment === 0) return 90 + Math.random() * 60; // Green: 90–150
+      if (segment === 1) return 180 + Math.random() * 70; // Blue: 180–250
+      return 260 + Math.random() * 40; // Purple: 260–300
+    })
+  );
+
+  return baseHues.map((hue, i) => {
+    const saturation = i % 2 === 0 ? 55 : 75; // moderately vibrant
+    const lightness = i % 3 === 0 ? 65 : i % 3 === 1 ? 55 : 45; // avoid too dark
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  });
+}
+
+// 🔹 Your main function
 function updateSunburstChart(data, artistName) {
   const artistData = data.filter(
     (d) =>
@@ -1577,14 +1623,13 @@ function updateSunburstChart(data, artistName) {
       .style("display", "flex")
       .style("flex-direction", "row")
       .style("align-items", "flex-start")
-      .style("gap", " calc(var(--spacing) * 10)");
+      .style("gap", "calc(var(--spacing) * 10)");
 
-    flexContainer.append("div").attr("class", "sunburstSVG").style("order", 0); // always left
-
+    flexContainer.append("div").attr("class", "sunburstSVG").style("order", 0);
     flexContainer
       .append("div")
       .attr("class", "albumDetailBox")
-      .style("order", 1) // always right
+      .style("order", 1)
       .style("border-radius", "var(--border-radius-small)")
       .style("padding", "var(--spacing)")
       .style("display", "none")
@@ -1603,36 +1648,53 @@ function updateSunburstChart(data, artistName) {
     .select("div.albumDetailBox")
     .style("display", "block");
 
-  const albums = d3.groups(
-    artistData,
-    (d) => d.master_metadata_album_album_name
-  );
-  const hierarchy = {
-    name: artistName,
-    children: albums.map(([album, records]) => {
+  // Group tracks under albums
+  const albumNodes = d3
+    .groups(artistData, (d) => d.master_metadata_album_album_name)
+    .map(([album, records]) => {
       const tracks = d3.groups(records, (d) => d.master_metadata_track_name);
       return {
         name: album,
+        records,
         children: tracks.map(([track, trackRecords]) => ({
           name: track,
           value: d3.sum(trackRecords, (d) => +d.ms_played / 60000),
         })),
       };
-    }),
+    });
+
+  const hierarchy = {
+    name: artistName,
+    children: albumNodes,
   };
 
   const width = 300,
     radius = width / 2;
+
   const partition = d3.partition().size([2 * Math.PI, radius]);
   const root = d3.hierarchy(hierarchy).sum((d) => d.value);
   partition(root);
 
+  // 🔸 Assign unique persistent colors for new albums
+  const allAlbumNames = (root.children || []).map((d) => d.data.name);
+  const newAlbumNames = allAlbumNames.filter(
+    (name) => !albumColorMap.has(name)
+  );
+  const newColors = generateDistinctColors(newAlbumNames.length);
+  newAlbumNames.forEach((name, i) => {
+    albumColorMap.set(name, newColors[i]);
+  });
+
+  const margin = 50; // 👈 add space around the edges
+  const svgWidth = width + margin * 2;
+  const svgHeight = width + margin * 2;
+
   const svg = svgContainer
     .append("svg")
-    .attr("width", width)
-    .attr("height", width)
+    .attr("width", svgWidth)
+    .attr("height", svgHeight)
     .append("g")
-    .attr("transform", `translate(${radius},${radius})`);
+    .attr("transform", `translate(${svgWidth / 2}, ${svgHeight / 2})`);
 
   const arc = d3
     .arc()
@@ -1648,14 +1710,22 @@ function updateSunburstChart(data, artistName) {
     .append("path")
     .attr("d", arc)
     .attr("fill", (d) => {
-      let current = d;
-      while (current.depth > 1) current = current.parent;
-      const albumName = current.data.name;
-      if (!albumColorMap.has(albumName)) {
-        const index = hashStringToIndex(albumName, colorScale.range().length);
-        albumColorMap.set(albumName, colorScale(index));
+      let albumNode = d;
+      while (albumNode.depth > 1) albumNode = albumNode.parent;
+      let baseColor = d3.color(albumColorMap.get(albumNode.data.name));
+
+      // Make base album color more vibrant
+      baseColor = d3.hsl(baseColor);
+      if (d.depth === 1) {
+        return baseColor.toString(); // Use vibrant color for album arc
       }
-      return albumColorMap.get(albumName);
+
+      // Add subtle optimacy (less saturation, slightly lighter/darker)
+      const shade = d3.hsl(baseColor);
+      shade.s *= 0.5 + 0.7; // reduce saturation slightly
+      shade.l += 0.25 * 0.7; // adjust lightness ±10%
+
+      return shade.toString();
     })
     .attr("stroke", "#fff")
     .attr("cursor", "pointer")
@@ -1689,7 +1759,6 @@ function updateSunburstChart(data, artistName) {
       if (d.depth === 1) {
         drillDownState.selectedAlbum = d.data.name;
 
-        // Only selected album gets color, others gray
         paths
           .transition()
           .duration(200)
@@ -1727,8 +1796,157 @@ function updateSunburstChart(data, artistName) {
       }
     });
 
-  if (drillDownState.selectedAlbum) {
+  // Arched labels along the outer edge for top 2–3 albums (≥20%)
+  const totalValue = root.value;
+  const topAlbums = (root.children || [])
+    .map((d) => ({
+      node: d,
+      percentage: d.value / totalValue,
+    }))
+    .sort((a, b) => b.percentage - a.percentage)
+    .slice(0, 3);
+
+  const defs = svg.append("defs");
+
+  topAlbums.forEach(({ node }) => {
+    const name = node.data.name;
+    const safeId = name.replace(/[^a-zA-Z0-9_-]/g, "-"); // replace any unsafe character
+    const pathId1 = `arcLine1-${safeId}`;
+    const pathId2 = `arcLine2-${safeId}`;
+
+    const midAngle = (node.x0 + node.x1) * 0.65;
+    const isLeftSide = midAngle > Math.PI;
+
+    // Determine arc angles
+    const startAngle = node.x0;
+    const endAngle = node.x1;
+
+    // Radius offsets for each line
+    const baseRadius = radius + 6;
+    const line1Radius = baseRadius;
+    const line2Radius = baseRadius + 13;
+
+    // Create two arc paths (one per line)
+    const arcLine1 = d3
+      .arc()
+      .innerRadius(line1Radius)
+      .outerRadius(line1Radius)
+      .startAngle(startAngle)
+      .endAngle(endAngle);
+
+    const arcLine2 = d3
+      .arc()
+      .innerRadius(line2Radius)
+      .outerRadius(line2Radius)
+      .startAngle(startAngle)
+      .endAngle(endAngle);
+
+    // Append arc paths to defs
+    defs
+      .append("path")
+      .attr("id", pathId1)
+      .attr("d", arcLine1())
+      .attr("fill", "none");
+
+    defs
+      .append("path")
+      .attr("id", pathId2)
+      .attr("d", arcLine2())
+      .attr("fill", "none");
+
+    // Calculate how much text fits (based on arc length)
+    const arcLength = defs.select(`#${pathId1}`).node().getTotalLength();
+    const maxCharsPerLine = Math.floor(arcLength / 8); // ~8px per character
+
+    // Smart split into two lines
+    function splitTextToTwoLines(text, maxPerLine) {
+      const words = text.split(" ");
+      let line1 = "",
+        line2 = "";
+      let current = "";
+
+      for (let i = 0; i < words.length; i++) {
+        if ((current + " " + words[i]).trim().length <= maxPerLine) {
+          current = (current + " " + words[i]).trim();
+        } else {
+          line1 = current;
+          line2 = words.slice(i).join(" ");
+          break;
+        }
+      }
+
+      if (!line1) {
+        line1 = text.slice(0, maxPerLine);
+        line2 = text.slice(maxPerLine);
+      }
+
+      return [line1.trim(), line2.trim()];
+    }
+
+    const [line1, line2] = splitTextToTwoLines(name, maxCharsPerLine / 2);
+
+    // Function to create text along arc with correct flipping
+    function addTextPath(lineText, pathId, dyOffset, isLeftSide) {
+      const textGroup = svg.append("g");
+
+      if (isLeftSide) {
+        // Rotate text group 180° around the arc center
+      }
+
+      textGroup
+        .append("text")
+        .append("textPath")
+        .attr("href", `#${pathId}`)
+        .style("font-size", "11px")
+        .style("fill", "#000")
+        .style("pointer-events", "none")
+        .attr("dy", dyOffset)
+        .attr("dominant-baseline", "middle")
+        .text(lineText);
+    }
+
+    addTextPath(line2, pathId1, "-0.6em", isLeftSide); // top line
+    addTextPath(line1, pathId2, "0.6em", isLeftSide); // bottom line
+  });
+
+  // 🔹 Reselect previously selected album if still present
+  if (
+    drillDownState.selectedAlbum &&
+    allAlbumNames.includes(drillDownState.selectedAlbum)
+  ) {
+    paths
+      .transition()
+      .duration(0)
+      .attr("fill", (p) => {
+        if (p.depth === 1 && p.data.name === drillDownState.selectedAlbum) {
+          return albumColorMap.get(p.data.name);
+        }
+        if (
+          p.depth > 1 &&
+          p
+            .ancestors()
+            .some(
+              (a) =>
+                a.depth === 1 && a.data.name === drillDownState.selectedAlbum
+            )
+        ) {
+          let albumNode = p.ancestors().find((a) => a.depth === 1);
+          return albumColorMap.get(albumNode.data.name);
+        }
+        return "#f5f5f5";
+      })
+      .attr("stroke", (p) =>
+        p.depth === 1 && p.data.name === drillDownState.selectedAlbum
+          ? "#000"
+          : "#fff"
+      )
+      .attr("stroke-width", (p) =>
+        p.depth === 1 && p.data.name === drillDownState.selectedAlbum ? 4 : 1
+      );
+
     updateAlbumInfo(drillDownState.selectedAlbum, artistData, detailBox);
+  } else {
+    drillDownState.selectedAlbum = null;
   }
 }
 
@@ -1827,10 +2045,20 @@ function updateAlbumInfo(selectedAlbum, artistData, detailBox) {
         drillDownState.selectedAlbum = null;
         infoContainer.html("").style("display", "none");
 
+        // Reselect all paths and reset color/stroke
+        const sunburstPaths = d3
+          .select("#sunburstChart")
+          .select("div.sunburstSVG")
+          .select("svg")
+          .selectAll("path");
+
         d3.select("#sunburstChart")
           .select("div.sunburstSVG")
           .select("svg")
           .selectAll("path")
+          .filter(function (d) {
+            return d;
+          })
           .transition()
           .duration(200)
           .attr("fill", (d) => {
@@ -2170,14 +2398,29 @@ function initArtistSearch(data) {
   const artists = Array.from(artistSet).sort();
   const input = document.getElementById("artistSearchInput");
   const dropdown = document.getElementById("artistDropdown");
+
+  let currentIndex = -1;
+  let filteredArtists = [];
+
+  function updateSelection(index) {
+    const items = dropdown.querySelectorAll("li");
+    items.forEach((li, i) => {
+      li.classList.toggle("highlight", i === index);
+      if (i === index) {
+        li.scrollIntoView({ block: "nearest" }); // 👈 ensures visibility
+      }
+    });
+  }
+
   function showDropdown() {
     const query = input.value.toLowerCase();
     dropdown.innerHTML = "";
+    currentIndex = -1;
     if (query === "") {
       dropdown.style.display = "none";
       return;
     }
-    const filteredArtists = artists.filter((artist) =>
+    filteredArtists = artists.filter((artist) =>
       artist.toLowerCase().includes(query)
     );
     if (filteredArtists.length > 0) {
@@ -2188,7 +2431,6 @@ function initArtistSearch(data) {
           input.value = artist;
           dropdown.innerHTML = "";
           dropdown.style.display = "none";
-          // Update artist info only on artist selection
           updateArtistInfo(data, artist);
           updateAllCharts(data, artist);
         });
@@ -2199,26 +2441,48 @@ function initArtistSearch(data) {
       dropdown.style.display = "none";
     }
   }
+
   input.addEventListener("input", showDropdown);
+
   input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
+    const items = dropdown.querySelectorAll("li");
+    if (event.key === "ArrowDown") {
+      if (filteredArtists.length > 0) {
+        currentIndex = (currentIndex + 1) % filteredArtists.length;
+        updateSelection(currentIndex);
+      }
+      event.preventDefault();
+    } else if (event.key === "ArrowUp") {
+      if (filteredArtists.length > 0) {
+        currentIndex =
+          (currentIndex - 1 + filteredArtists.length) % filteredArtists.length;
+        updateSelection(currentIndex);
+      }
+      event.preventDefault();
+    } else if (event.key === "Enter") {
+      if (currentIndex >= 0 && currentIndex < filteredArtists.length) {
+        input.value = filteredArtists[currentIndex];
+      }
       dropdown.style.display = "none";
       const artist = input.value.trim();
       updateArtistInfo(data, artist);
       updateAllCharts(data, artist);
     }
   });
+
   document.addEventListener("click", (event) => {
     if (!input.contains(event.target) && !dropdown.contains(event.target)) {
       dropdown.style.display = "none";
     }
   });
+
   document.getElementById("artistSearchBtn").addEventListener("click", () => {
     const artist = input.value.trim();
     updateArtistInfo(data, artist);
     updateAllCharts(data, artist);
   });
 }
+
 
 /***********************
  * Event Listener for Applying Date Range
