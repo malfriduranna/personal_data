@@ -87,6 +87,7 @@
         <div class="row">
           <div id="scatterChart" class="full_width">
             <h2>Song Distribution (Scatter Plot)</h2>
+            <p class="placeholder">Each dot is a song. X-axis shows the most minutes you listened to it in any year (binge). Y-axis shows how many months you returned to it (consistency).</p>
             <p class="placeholder">Select a song to see more details</p>
             <!-- The chart (and later info box) will be rendered here. -->
           </div>
@@ -110,7 +111,7 @@
     <!-- Tooltip container for sunburst -->
     <div id="sunburstTooltip" class="sunburst_tooltip"></div>
 
-    <script src="scripts/deepDiveText.js" type="module" defer></script>
+    <script src="scripts/deepDive.js" type="module" defer></script>
 
     <script>
       function loadComponent(url, placeholderId) {

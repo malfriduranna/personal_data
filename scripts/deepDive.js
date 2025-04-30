@@ -22,16 +22,18 @@ function updateTimeControls(artistData, artistName) {
   const yearSelect = document.getElementById("yearSelect");
   yearSelect.innerHTML = "";
 
-  // Get unique years from the artist data.
+  // Get unique years from the artist data
   const uniqueYears = Array.from(
     new Set(artistData.map((d) => new Date(d.ts).getFullYear()))
   ).sort((a, b) => a - b);
 
+  // Add "All Years" option
   const defaultOption = document.createElement("option");
   defaultOption.value = "";
   defaultOption.text = "All Years";
   yearSelect.appendChild(defaultOption);
 
+  // Add each year as an option
   uniqueYears.forEach((year) => {
     const option = document.createElement("option");
     option.value = year;
@@ -39,21 +41,31 @@ function updateTimeControls(artistData, artistName) {
     yearSelect.appendChild(option);
   });
 
-  // When a year is selected, update the date range to that year.
+  // When a year is selected, update date inputs + charts immediately
   yearSelect.addEventListener("change", function () {
     const selectedYear = parseInt(this.value);
+    let start, end;
+
     if (!isNaN(selectedYear)) {
-      const yearStart = new Date(selectedYear, 0, 1);
-      const yearEnd = new Date(selectedYear, 11, 31);
-      startDateInput.value = formatDate(yearStart);
-      endDateInput.value = formatDate(yearEnd);
+      start = new Date(selectedYear, 0, 2); // Jan 1
+      end = new Date(selectedYear, 11, 32); // Dec 31
     } else {
-      startDateInput.value = formatDate(minDate);
-      endDateInput.value = formatDate(maxDate);
+      start = minDate;
+      end = maxDate;
     }
+
+    startDateInput.value = formatDate(start);
+    endDateInput.value = formatDate(end);
+
+    const filteredData = window.allParsedData.filter((d) => {
+      const date = new Date(d.ts);
+      return date >= start && date <= end;
+    });
+
+    updateAllCharts(filteredData, artistName);
   });
 
-  // Attach a reset event listener to the "Reset Controls" button.
+  // Reset controls
   const resetButton = document.getElementById("resetRangeBtn");
   if (resetButton) {
     resetButton.addEventListener("click", function () {
@@ -88,6 +100,16 @@ function updatePeakListening(data, artistName) {
   const container = d3.select("#peakListening");
   container.selectAll("svg").remove();
 
+  // Add instructions above chart
+  container.selectAll("p.peak-instructions").remove();
+  container
+    .append("p")
+    .attr("class", "peak-instructions")
+    .style("margin-bottom", "4px")
+    .style("font-size", "0.85rem")
+    .style("color", "#555")
+    .text("Click and drag to select a time range. Double-click to reset.");
+
   if (!artistData.length) {
     container.selectAll("p.peak-message").remove();
     container
@@ -116,15 +138,18 @@ function updatePeakListening(data, artistName) {
     groupFn = (d) => parseDate(d); // no grouping
     xFormat = d3.timeFormat("%b %d, %H:%M"); // e.g. "May 02, 13:45"
   } else if (diffDays <= 60) {
-    // 2) Group by day
     groupFn = (d) => d3.timeDay(parseDate(d));
-    xFormat = d3.timeFormat("%b %d"); // e.g. "May 02"
   } else {
-    // 3) Group by week
     groupFn = (d) => d3.timeWeek(parseDate(d));
-    xFormat = d3.timeFormat("%b %d"); // e.g. "May 02"
   }
 
+  xFormat = (d) => {
+    if (d.getMonth() === 0 && d.getDate() === 1) {
+      return d3.timeFormat("%b %e, '%y")(d); // e.g. Jan 1, '23
+    } else {
+      return d3.timeFormat("%b %e")(d); // e.g. Apr 5
+    }
+  };
   // Aggregate data by chosen grouping
   const grouped = d3.rollups(
     artistData,
@@ -254,6 +279,18 @@ function updatePeakListening(data, artistName) {
     .on("end", brushed);
 
   svg.append("g").attr("class", "brush").call(brush);
+
+  const tooltip = container
+    .append("div")
+    .style("position", "absolute")
+    .style("visibility", "hidden")
+    .style("background", "white")
+    .style("border", "1px solid #ccc")
+    .style("padding", "6px 8px")
+    .style("border-radius", "4px")
+    .style("font-size", "0.8rem")
+    .style("pointer-events", "none")
+    .style("box-shadow", "0 1px 4px rgba(0,0,0,0.2)");
 
   // Brush event handler.
   function brushed({ selection }) {
@@ -781,10 +818,12 @@ let selectedTrackName = null;
  * It also re-applies (or updates) the info box if one is already open,
  * so that when you change the time frame the stats for the selected track update.
  */
+// Updated version: Y-axis now shows consistency (% of distinct months with plays within selected time range), X-axis shows max minutes in a year
 function updateScatterPlot(data, artistName) {
   const scatterContainer = d3.select("#scatterChart");
 
   let flexContainer = scatterContainer.select("div.chartAndInfo");
+
   if (flexContainer.empty()) {
     flexContainer = scatterContainer
       .append("div")
@@ -799,14 +838,14 @@ function updateScatterPlot(data, artistName) {
   }
 
   const margin = { top: 20, right: 20, bottom: 50, left: 50 },
-  innerWidth = 500 - margin.left - margin.right,
-  innerHeight = 300 - margin.top - margin.bottom;
+    innerWidth = 500 - margin.left - margin.right,
+    innerHeight = 300 - margin.top - margin.bottom;
 
   let svgEl = chartDiv.select("svg");
   if (svgEl.empty()) {
     svgEl = chartDiv
       .append("svg")
-      .attr("viewBox", "0 0 550 350") // slightly bigger
+      .attr("viewBox", "0 0 550 350")
       .style("width", "550px")
       .style("height", "350px");
     svgEl = svgEl
@@ -823,36 +862,53 @@ function updateScatterPlot(data, artistName) {
         artistName.toLowerCase()
   );
 
+  // Get global start and end from the filtered data
+  const listenedMonths = new Set(
+    data
+      .filter(
+        (d) =>
+          d.master_metadata_album_artist_name &&
+          d.master_metadata_album_artist_name.toLowerCase() ===
+            artistName.toLowerCase()
+      )
+      .map((d) => {
+        const date = new Date(d.ts);
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}`;
+      })
+  );
+
+  // Step 2: Use the size of that set as the total months for consistency calculations
+  const totalMonths = listenedMonths.size;
+
   const trackStats = d3
     .rollups(
       artistData,
       (v) => {
-        const totalMinutes = d3.sum(v, (d) => +d.ms_played / 60000);
-
         const yearMap = d3.rollup(
           v,
           (vv) => d3.sum(vv, (d) => +d.ms_played / 60000),
           (d) => new Date(d.ts).getFullYear()
         );
 
-        let mostPlayedYear = "",
-          mostMinutesInYear = 0;
-        yearMap.forEach((minutes, year) => {
-          if (minutes > mostMinutesInYear) {
-            mostMinutesInYear = minutes;
-            mostPlayedYear = year;
-          }
-        });
+        const uniqueMonthKeys = new Set(
+          v.map((d) => {
+            const date = new Date(d.ts);
+            return `${date.getFullYear()}-${String(
+              date.getMonth() + 1
+            ).padStart(2, "0")}`;
+          })
+        );
 
-        const activeYears = yearMap.size;
-        const avgMinutesPerYear = totalMinutes / activeYears;
+        const monthsWithListening = uniqueMonthKeys.size;
+        const consistency =
+          totalMonths > 0 ? monthsWithListening / totalMonths : 0;
 
         return {
-          totalMinutes,
-          mostMinutesInYear,
-          avgMinutesPerYear,
-          activeYears,
-          mostPlayedYear,
+          maxMinutesInYear: d3.max(yearMap.values()),
+          consistency,
         };
       },
       (d) => d.master_metadata_track_name
@@ -870,31 +926,29 @@ function updateScatterPlot(data, artistName) {
 
   const x = d3
     .scaleLinear()
-    .domain([0, d3.max(trackStats, (d) => d.mostMinutesInYear)])
+    .domain([0, d3.max(trackStats, (d) => d.maxMinutesInYear)])
     .nice()
     .range([0, innerWidth]);
 
-  const y = d3
+  const y = d3.scaleLinear().domain([0, 1]).range([innerHeight, 0]);
+
+  const color = d3
     .scaleLinear()
-    .domain([0, d3.max(trackStats, (d) => d.avgMinutesPerYear)])
-    .nice()
-    .range([innerHeight, 0]);
+    .domain([0, 0.5, 1])
+    .range(["#e53935", "#fdd835", "#43a047"]);
 
   svgEl.selectAll(".x-axis, .y-axis, .axis-label").remove();
+
   svgEl
     .append("g")
     .attr("class", "x-axis")
     .attr("transform", `translate(0,${innerHeight})`)
-    .call(d3.axisBottom(x))
-    .selectAll("text")
-    .style("font-size", "8px");
+    .call(d3.axisBottom(x));
 
   svgEl
     .append("g")
     .attr("class", "y-axis")
-    .call(d3.axisLeft(y))
-    .selectAll("text")
-    .style("font-size", "8px");
+    .call(d3.axisLeft(y).tickFormat(d3.format(".0%")));
 
   svgEl
     .append("text")
@@ -903,7 +957,7 @@ function updateScatterPlot(data, artistName) {
     .attr("y", innerHeight + 40)
     .attr("text-anchor", "end")
     .style("font-size", "10px")
-    .text("Max Minutes in a Single Year (Binge)");
+    .text("Max Minutes in a Single Year");
 
   svgEl
     .append("text")
@@ -913,108 +967,7 @@ function updateScatterPlot(data, artistName) {
     .attr("x", -5)
     .attr("text-anchor", "end")
     .style("font-size", "9px")
-    .text("Average Minutes per Year (Loyal)");
-
-  const circles = svgEl.selectAll("circle").data(trackStats, (d) => d.track);
-  circles.join(
-    (enter) =>
-      enter
-        .append("circle")
-        .attr("cx", (d) => x(d.mostMinutesInYear))
-        .attr("cy", (d) => y(d.avgMinutesPerYear))
-        .attr("r", 0)
-        .attr("fill", "#69b3a2")
-        .attr("opacity", 0.7)
-        .style("cursor", "pointer")
-        .on("click", (event, d) => {
-          selectedTrackName = d.track;
-          const rawData = artistData.filter(
-            (e) => e.master_metadata_track_name === d.track
-          );
-          updateSongDistPlot({ ...d, rawData });
-
-          svgEl
-            .selectAll("circle")
-            .attr("fill", (d) =>
-              d.track === selectedTrackName ? "#ff9800" : "#69b3a2"
-            );
-        })
-        .on("mouseover", (event, d) => {
-          tooltip.transition().duration(200).style("opacity", 0.9);
-          tooltip
-            .html(d.track)
-            .style("left", event.pageX + 10 + "px")
-            .style("top", event.pageY - 28 + "px")
-            .style("cursor", "pointer");
-        })
-        .on("mousemove", (event) => {
-          tooltip
-            .style("left", event.pageX + 10 + "px")
-            .style("top", event.pageY - 28 + "px");
-        })
-        .on("mouseout", () => {
-          tooltip.transition().duration(500).style("opacity", 0);
-        })
-        .call((enter) => enter.transition().duration(800).attr("r", 4)),
-    (update) =>
-      update.call((update) =>
-        update
-          .transition()
-          .duration(800)
-          .attr("cx", (d) => x(d.mostMinutesInYear))
-          .attr("cy", (d) => y(d.avgMinutesPerYear))
-      ),
-    (exit) =>
-      exit.call((exit) => exit.transition().duration(800).attr("r", 0).remove())
-  );
-
-  const xThreshold = d3.quantile(
-    trackStats.map((d) => d.mostMinutesInYear).sort(d3.ascending),
-    0.99
-  );
-  const yThreshold = d3.quantile(
-    trackStats.map((d) => d.avgMinutesPerYear).sort(d3.ascending),
-    0.99
-  );
-
-  const outliers = trackStats.filter(
-    (d) => d.mostMinutesInYear > xThreshold || d.avgMinutesPerYear > yThreshold
-  );
-
-  const labels = svgEl.selectAll(".label").data(outliers, (d) => d.track);
-  labels.join(
-    (enter) =>
-      enter
-        .append("text")
-        .attr("class", "label")
-        .attr("x", (d) => x(d.mostMinutesInYear) + 8)
-        .attr("y", (d) => y(d.avgMinutesPerYear))
-        .attr("dy", "0.35em")
-        .attr("text-anchor", "start")
-        .text((d) => d.track)
-        .style("font-size", "10px")
-        .style("fill", "#333")
-        .style("opacity", 0)
-        .each(function () {
-          wrapText(d3.select(this), 50); // <= add wrapping here
-        })
-        .call((enter) => enter.transition().duration(800).style("opacity", 1)),
-    (update) =>
-      update
-        .text((d) => d.track) // force update
-        .attr("x", (d) => x(d.mostMinutesInYear) + 8)
-        .attr("y", (d) => y(d.avgMinutesPerYear))
-        .attr("dy", "0.35em")
-        .attr("text-anchor", "start")
-        .each(function () {
-          wrapText(d3.select(this), 50); // <= re-wrap on update
-        })
-        .call((update) => update.transition().duration(800)),
-    (exit) =>
-      exit.call((exit) =>
-        exit.transition().duration(800).style("opacity", 0).remove()
-      )
-  );
+    .text("Consistency Across Months (% of Months Played)");
 
   let tooltip = d3.select("body").select(".tooltip");
   if (tooltip.empty()) {
@@ -1030,6 +983,103 @@ function updateScatterPlot(data, artistName) {
       .style("pointer-events", "none")
       .style("opacity", 0);
   }
+
+  svgEl
+    .selectAll("circle")
+    .data(trackStats, (d) => d.track)
+    .join(
+      (enter) =>
+        enter
+          .append("circle")
+          .attr("cx", (d) => x(d.maxMinutesInYear))
+          .attr("cy", (d) => y(d.consistency))
+          .attr("r", 4)
+          .attr("fill", (d) => color(d.consistency))
+          .attr("opacity", 0.8)
+          .style("cursor", "pointer")
+          .on("click", (event, d) => {
+            const rawData = artistData.filter(
+              (e) => e.master_metadata_track_name === d.track
+            );
+            updateSongDistPlot({ ...d, rawData });
+          })
+          .on("mouseover", (event, d) => {
+            tooltip.transition().duration(200).style("opacity", 0.9);
+            tooltip
+              .html(
+                `<strong style="color: var(--white-color)">${d.track}</strong><br/>` +
+                  `Max (year): ${d.maxMinutesInYear.toFixed(1)} min<br/>` +
+                  `Consistency: ${(d.consistency * 100).toFixed(1)}%`
+              )
+              .style("left", event.pageX + 10 + "px")
+              .style("top", event.pageY - 28 + "px");
+          })
+          .on("mousemove", (event) => {
+            tooltip
+              .style("left", event.pageX + 10 + "px")
+              .style("top", event.pageY - 28 + "px");
+          })
+          .on("mouseout", () => {
+            tooltip.transition().duration(500).style("opacity", 0);
+          }),
+      (update) =>
+        update.call((u) =>
+          u
+            .transition()
+            .duration(800)
+            .attr("cx", (d) => x(d.maxMinutesInYear))
+            .attr("cy", (d) => y(d.consistency))
+            .attr("r", 4)
+            .attr("fill", (d) => color(d.consistency))
+        ),
+      (exit) => exit.remove()
+    );
+
+  const xThreshold = d3.quantile(
+    trackStats.map((d) => d.maxMinutesInYear).sort(d3.ascending),
+    0.99
+  );
+  const yThreshold = 0.99;
+
+  const outliers = trackStats.filter(
+    (d) => d.maxMinutesInYear > xThreshold || d.consistency > yThreshold
+  );
+
+  svgEl
+    .selectAll(".label")
+    .data(outliers, (d) => d.track)
+    .join(
+      (enter) =>
+        enter
+          .append("text")
+          .attr("class", "label")
+          .attr("x", (d) => x(d.maxMinutesInYear) + 8)
+          .attr("y", (d) => y(d.consistency))
+          .attr("dy", "0.35em")
+          .attr("text-anchor", "start")
+          .text((d) => d.track)
+          .style("font-size", "10px")
+          .style("fill", "#333")
+          .style("opacity", 0)
+          .each(function () {
+            wrapText(d3.select(this), 50);
+          })
+          .call((enter) =>
+            enter.transition().duration(800).style("opacity", 1)
+          ),
+      (update) =>
+        update
+          .text((d) => d.track)
+          .attr("x", (d) => x(d.maxMinutesInYear) + 8)
+          .attr("y", (d) => y(d.consistency))
+          .attr("dy", "0.35em")
+          .attr("text-anchor", "start")
+          .each(function () {
+            wrapText(d3.select(this), 50);
+          })
+          .call((update) => update.transition().duration(800)),
+      (exit) => exit.transition().duration(800).style("opacity", 0).remove()
+    );
 
   if (selectedTrackName) {
     const updatedTrack = trackStats.find((t) => t.track === selectedTrackName);
@@ -1107,8 +1157,6 @@ function updateSongDistPlot(trackData) {
       .style("cursor", "pointer")
       .on("click", () => {
         selectedTrackName = null;
-        svgEl.selectAll("circle").attr("fill", "#69b3a2");
-        svgEl.selectAll(".selected-circle").style("opacity", 0);
         flexContainer.selectAll("div.infoDiv").remove();
       });
 
