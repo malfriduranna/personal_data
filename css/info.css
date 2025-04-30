@@ -12,3 +12,195 @@
   border: 1px solid var(--dark-green-color);
   border-radius: var(--border-radius); /* change this value for more/less roundness */
 }
+/* --- Styles for Enhanced Homepage Info Text --- */
+
+.info_text {
+  margin-top: 1rem; /* Add some space above the block */
+  margin-bottom: 2rem; /* Add more space below the block */
+  padding: 1.5rem; /* Add padding inside the block */
+  background-color: var(--card-bg-color, #1DB954); /* Subtle background to make the block stand out */
+  border-radius: var(--border-radius, 8px); /* Rounded corners like cards */
+  border: 1px solid var(--border-color, #eee); /* Faint border */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle shadow */
+}
+
+/* Style the introductory paragraph */
+.info_text > p:first-child { /* Target the first <p> directly inside .info_text */
+  font-size: 1.3em;       /* Make it noticeably larger */
+  font-weight: 500;       /* Medium weight - bolder than normal, less than bold */
+  margin-bottom: 1.5em;   /* More space before the list */
+  color: var(--text-color-strong, #333); /* Darker text */
+  line-height: 1.5;
+}
+
+/* Style the list itself */
+.info_text ul {
+  list-style: none; /* Remove default bullets */
+  padding-left: 0;  /* Remove default indentation */
+  margin-top: 0;
+}
+
+/* Style each list item (description) */
+.info_text li {
+  font-size: 1.15em;      /* Increase font size for the description */
+  line-height: 1.7;       /* Improve readability with more line spacing */
+  margin-bottom: 1.2em;   /* Generous space between list items */
+  color: var(--text-color-secondary, #444); /* Slightly softer text color */
+}
+
+/* Style the heading/link part within the list item */
+.info_text li strong {
+  display: block; /* Make the strong tag take its own line */
+  margin-bottom: 0.3em; /* Small space between heading and description */
+  font-size: 1.1em; /* Make heading slightly larger relative to description */
+  font-weight: 600; /* Bolder */
+}
+
+.info_text li strong a {
+  color: var(--primary-color, #eee); /* Use the primary color for links */
+  text-decoration: none; /* Remove underline by default */
+  transition: color 0.2s ease; /* Smooth transition for hover */
+}
+.info_text li strong a:hover,
+.info_text li strong a:focus {
+  color: var(--primary-color-dark, #eee); /* Darker shade on hover/focus */
+  text-decoration: underline; /* Add underline on interaction */
+}
+
+
+/* Style the final paragraph ("Ready to explore...") */
+.info_text > p:last-child { /* Target the last <p> directly inside .info_text */
+  font-size: 1.2em;       /* Match the intro paragraph size */
+  margin-top: 2em;      /* More space after the list */
+  font-weight: 500;
+  text-align: center;     /* Center the final call to action */
+  color: var(--text-color, #333);
+}
+
+/* --- End of Enhanced Homepage Info Text Styles --- */
+
+/* --- Styles for Enhanced Homepage Info Text --- */
+
+.info_text {
+  margin-top: 1rem;
+  margin-bottom: 1.5rem; /* Reduced bottom margin */
+  padding: 1.2rem;      /* Reduced padding */
+  /* Use a lighter green background. Choose one, or define a variable: */
+  /* Option 1: Very light pastel green */
+  /* background-color: var(--light-green-bg, #e6f7eb); */
+  /* Option 2: Slightly more saturated light green */
+  background-color: var(--light-green-bg, #c8e6c9);
+  color: var(--text-color-dark, #212529); /* Default dark text for good contrast */
+  border-radius: var(--border-radius, 8px);
+  border: 1px solid var(--border-color-light, #b8d8be); /* Border matching background */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04); /* Softer shadow */
+}
+
+/* Style the introductory paragraph */
+.info_text > p:first-child {
+  font-size: 1.15em;    /* Slightly reduced size */
+  font-weight: 600;     /* Slightly bolder */
+  margin-bottom: 1.2em; /* Reduced space before the list */
+  color: var(--text-color-very-dark, #000); /* Stronger color for heading */
+  line-height: 1.4;     /* Reduced line height */
+}
+
+/* Style the list itself */
+.info_text ul {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 0;
+}
+
+/* Style each list item (description) */
+.info_text li {
+  font-size: 1em;         /* Reduced size */
+  line-height: 1.5;       /* Reduced line height */
+  margin-bottom: 1em;     /* Reduced space between items */
+  color: var(--text-color-medium, #343a40); /* Good readable dark grey */
+}
+
+/* Style the heading/link part within the list item */
+.info_text li strong {
+  display: block;
+  margin-bottom: 0.2em; /* Slightly reduced space */
+  font-size: 1.05em;    /* Slightly reduced size */
+  font-weight: 700;     /* Bold */
+}
+
+/* Links should be a contrasting color - perhaps the original Spotify green? */
+.info_text li strong a {
+  color: var(--primary-color, #1DB954); /* Use primary green for links */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.info_text li strong a:hover,
+.info_text li strong a:focus {
+  color: var(--primary-color-dark, #189a46); /* Darker green on hover */
+  text-decoration: underline;
+}
+
+
+/* Style the final paragraph ("Ready to explore...") */
+.info_text > p:last-child {
+  font-size: 1.1em;       /* Reduced size */
+  margin-top: 1.5em;      /* Reduced space after the list */
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-color-dark, #212529); /* Match default text color */
+}
+
+/* --- End of Enhanced Homepage Info Text Styles --- */
+
+/* --- Styles for Homepage Feature Boxes --- */
+
+.features-container {
+  display: flex; /* Arrange boxes horizontally */
+  gap: var(--spacing, 1rem); /* Space between the boxes */
+  margin-top: 1.5rem;
+  margin-bottom: 2rem; /* Space below the container */
+  width: 100%; /* Ensure container takes full width */
+}
+
+.feature-box {
+  flex: 1; /* Make both boxes share the space equally */
+  background-color: var(--light-green-bg, #e6f7eb); /* Very light pastel green */
+  /* Alternative: background-color: var(--light-green-bg, #c8e6c9); */
+  padding: 1.2rem 1.5rem; /* Padding inside the boxes (vertical horizontal) */
+  border-radius: var(--border-radius, 8px);
+  border: 1px solid var(--border-color-light, #c8e6c9); /* Light border */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Subtle shadow */
+  /* Optional: Add a minimum height if descriptions vary a lot */
+  /* min-height: 150px; */
+}
+
+/* Style the heading (H3) inside the box */
+.feature-box h3 {
+  margin-top: 0;
+  margin-bottom: 0.6em;
+  font-size: 1.25em;
+  font-weight: 600;
+}
+
+/* Style the link within the H3 */
+.feature-box h3 a {
+  color: var(--primary-color, #1DB954); /* Spotify green link */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.feature-box h3 a:hover,
+.feature-box h3 a:focus {
+  color: var(--primary-color-dark, #189a46); /* Darker green on hover */
+  text-decoration: underline;
+}
+
+/* Style the paragraph description */
+.feature-box p {
+  font-size: 1em;
+  line-height: 1.6;
+  color: var(--text-color-medium, #343a40); /* Readable dark grey */
+  margin-bottom: 0; /* Remove default bottom margin */
+}
+
+/* --- End of Homepage Feature Boxes Styles --- */
+
