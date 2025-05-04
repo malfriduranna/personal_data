@@ -556,22 +556,18 @@ async function updateTopTracksAsText(data) {
          imgUrl = embedData?.thumbnail_url || placeholderImg;
        } catch (error) {
           console.warn(`oEmbed fetch failed for ${trackName}:`, error);
-          // imgUrl remains placeholderImg
        }
     }
-     // Return an object with all needed info for rendering
     return { trackName, artistName, totalMinutes, index, imgUrl };
   });
 
 
-  // --- Wait for all fetches to complete ---
   try {
     const results = await Promise.all(imageFetchPromises);
 
-    // --- Now, render the list using the results ---
-    // Clear again just in case of rapid calls (optional but safer)
+
     targetDiv.innerHTML = "";
-     if (results.length === 0) { // Should not happen if trackData wasn't empty, but check
+     if (results.length === 0) { 
          targetDiv.innerHTML = `<p class="empty-message">No track data after fetch.</p>`;
          return;
     }
@@ -592,7 +588,6 @@ async function updateTopTracksAsText(data) {
         </span>
         <span class="track-time" style="margin-left: auto; padding-left: 10px; white-space: nowrap;"> (${formatTime(result.totalMinutes)})</span>
       `;
-      // Add tooltips for full names if truncated
       if (result.trackName.length > 25) li.querySelector('.track-name').title = result.trackName;
       if (result.artistName.length > 30) li.querySelector('.track-artist').title = result.artistName;
 
@@ -600,7 +595,6 @@ async function updateTopTracksAsText(data) {
     });
 
   } catch (error) {
-      // Handle potential errors from Promise.all itself
       console.error("Error rendering top tracks list:", error);
       targetDiv.innerHTML = `<p class="error-message">Error loading track images.</p>`;
   }
@@ -621,7 +615,7 @@ function updateDayOfWeekChartAsText(data) {
     const dayData = d3.rollups(data.filter((d) => d.ms_played > 0), (v) => d3.sum(v, (d) => d.ms_played / 60000), (d) => d.ts.getDay()); const dayMap = new Map(dayData); const sortedDays = Array.from(dayMap.entries()).sort((a, b) => d3.descending(a[1], b[1])); const totalMinutes = d3.sum(dayMap.values()); if (totalMinutes <= 0) { targetDiv.innerHTML = `<p class="empty-message">No activity by day.</p>`; return; } const peakDayIndex = sortedDays.length > 0 ? sortedDays[0][0] : -1; const peakMinutes = sortedDays.length > 0 ? sortedDays[0][1] : 0;
     let textContent = `<h4 style="color: var(--spotify-color); margin-bottom: 5px;">Listening by Day</h4>`; textContent += `<p style="margin-top: 0; margin-bottom: 5px;">Total: <strong>${formatTime(totalMinutes)}</strong></p>`; if(peakDayIndex !== -1) { textContent += `<p style="margin-top: 0; margin-bottom: 10px;">Most active: <strong style="color: var(--dark-green-color);">${dayOfWeekNames[peakDayIndex]}</strong> (${formatTime(peakMinutes)}).</p>`; } textContent += `<ol style="padding-left: 1.2rem; margin: 0; font-size: 0.9em; line-height: 1.4;">`; const dayOrder = [1, 2, 3, 4, 5, 6, 0]; /* Mon-Sun */ for (const dayIndex of dayOrder) { const minutes = dayMap.get(dayIndex) || 0; textContent += `<li style="margin-bottom: 2px;"><strong>${dayOfWeekNames[dayIndex]}</strong>: ${formatTime(minutes)}</li>`; } textContent += `</ol>`; targetDiv.innerHTML = textContent;
  }
-async function drawStreamgraph(filteredData, containerId) { /* ... keep existing ... */ }
+// async function drawStreamgraph(filteredData, containerId) {}
 
 
 async function drawForceGraph2(filteredData, containerId, topN = currentForceGraphTopN) {
@@ -688,20 +682,17 @@ async function drawForceGraph2(filteredData, containerId, topN = currentForceGra
   const descEl = container.nextElementSibling; if (descEl && descEl.classList.contains('chart-description')) { descEl.innerHTML = `Transitions between top ${nodes.length} artists (max ${topN} shown). Hover/Pan/Zoom.`; }
 }
 
-// --- Main Update Trigger for Dependent Charts ---
-// Called by brush end or by main visualization update
+
 async function handleBrushUpdate(filteredChartData) {
     console.log(`handleBrushUpdate called with ${filteredChartData.length} records.`);
     const dataToUpdate = filteredChartData || [];
     try {
-        // Use Promise.all for concurrent updates where possible
         await Promise.all([
             updateTopArtistsAsText(dataToUpdate),
             updateTopTracksAsText(dataToUpdate),
-            drawStreamgraph(dataToUpdate, "streamgraph-chart"), // Assuming these are async or safe to run concurrently
+            drawStreamgraph(dataToUpdate, "streamgraph-chart"), 
             drawForceGraph2(dataToUpdate, "force-graph-chart", currentForceGraphTopN)
         ]);
-        // Run synchronous updates after async ones
         updateTimeOfDayChart(dataToUpdate);
         updateDayOfWeekChartAsText(dataToUpdate);
         console.log("handleBrushUpdate finished successfully.");
@@ -710,15 +701,14 @@ async function handleBrushUpdate(filteredChartData) {
     }
 }
 
-// --- Core Visualization Update Function ---
-// Called by main controls (Year Select, Date Range Apply) to set the overall view
+
 async function updateVisualization(filteredData) {
     console.log(`updateVisualization called`);
     const chartsToClear = [ topArtistsContainer, topTracksContainer, timeOfDayDiv, dayOfWeekDiv, streamgraphContainer, forceGraphContainer ];
-    chartsToClear.forEach((el) => { if (el) el.innerHTML = ""; }); // Clear dependent charts
-    if (mainChartDiv) mainChartDiv.innerHTML = ""; // Clear main chart area
+    chartsToClear.forEach((el) => { if (el) el.innerHTML = ""; }); 
+    if (mainChartDiv) mainChartDiv.innerHTML = ""; 
 
-    currentViewData = filteredData || []; // Update the data for the current main view
+    currentViewData = filteredData || []; 
 
     if (!currentViewData || currentViewData.length === 0) {
         if (mainChartDiv) mainChartDiv.innerHTML = `<p class="empty-message">No data found for the selected period.</p>`;
@@ -727,7 +717,6 @@ async function updateVisualization(filteredData) {
         return;
     }
 
-    // Determine the full date range for this view
     const [viewStartDate, viewEndDate] = d3.extent(currentViewData, (d) => d.ts);
     if (!viewStartDate || !viewEndDate || isNaN(viewStartDate) || isNaN(viewEndDate)) {
         console.error("updateVisualization: Invalid date range in data.");
@@ -738,30 +727,24 @@ async function updateVisualization(filteredData) {
 
     console.log(`Rendering view for: ${formatDate(viewStartDate)} to ${formatDate(viewEndDate)}`);
 
-    // Draw the main line graph with the full range for this view
-    // This call also sets up the brush behavior for the new graph.
+
     drawLineGraph(currentViewData, viewStartDate, viewEndDate);
 
-    // Update dependent charts with the full data for this new view
     console.log("Calling handleBrushUpdate for initial/reset view...");
     await handleBrushUpdate(currentViewData);
     console.log("handleBrushUpdate for initial/reset view finished.");
 
-    // Update filter label to show the full range
     updateFilterInfoLabel(viewStartDate, viewEndDate);
     console.log(`updateVisualization finished`);
 }
 
 
-// --- Event Listener Setup Function ---
 function setupEventListeners() {
     console.log("setupEventListeners called");
-    // Year Select Dropdown
     if (wrappedYearSelect) {
         wrappedYearSelect.onchange = async () => {
             console.log("Year select changed:", wrappedYearSelect.value);
             const selectedValue = wrappedYearSelect.value;
-            // No need to explicitly clear brush state, updateVisualization redraws the graph
             let dataToRender = [];
             if (selectedValue === "all") {
                 if (startDateInput && endDateInput && overallMinDate && overallMaxDate) { startDateInput.value = formatDateForInput(overallMinDate); endDateInput.value = formatDateForInput(overallMaxDate); }
@@ -769,11 +752,10 @@ function setupEventListeners() {
             } else if (selectedValue) {
                 const selectedYear = +selectedValue; if (isNaN(selectedYear)) { console.warn("Invalid year"); dataToRender = []; } else { const yearStart = new Date(selectedYear, 0, 1); const yearEnd = new Date(selectedYear, 11, 31); const effectiveStartDate = (!overallMinDate || yearStart < overallMinDate) ? overallMinDate : yearStart; const effectiveEndDate = (!overallMaxDate || yearEnd > overallMaxDate) ? overallMaxDate : yearEnd; const effectiveEndFilter = d3.timeDay.offset(effectiveEndDate, 1); dataToRender = allParsedData.filter(d => d.ts >= effectiveStartDate && d.ts < effectiveEndFilter); if (startDateInput) startDateInput.value = formatDateForInput(effectiveStartDate); if (endDateInput) endDateInput.value = formatDateForInput(effectiveEndDate); console.log(`Updating view for year ${selectedYear}`); }
             } else { console.warn("Year selection cleared."); }
-            await updateVisualization(dataToRender); // Update view, this redraws graph & resets zoom
+            await updateVisualization(dataToRender); 
         };
     } else { console.error("#wrappedYearSelect not found."); }
 
-    // Apply Date Range Button
     if (applyRangeBtn) {
         applyRangeBtn.onclick = async () => {
             console.log("Apply Range button clicked");
@@ -786,38 +768,32 @@ function setupEventListeners() {
             startDateInput.value = formatDateForInput(start); endDateInput.value = formatDateForInput(end);
             const filterEnd = d3.timeDay.offset(end, 1);
             if (wrappedYearSelect) wrappedYearSelect.value = "";
-            // updateVisualization redraws graph & resets zoom
             const filteredByRange = allParsedData.filter(d => d.ts >= start && d.ts < filterEnd);
             console.log(`Updating view for range ${formatDate(start)} to ${formatDate(end)}`);
             await updateVisualization(filteredByRange);
         };
     } else { console.error("#applyRangeBtn not found."); }
 
-    // Force Graph Slider Listener
     if (forceGraphSlider && forceGraphSliderValueSpan) {
         forceGraphSlider.addEventListener('input', () => { forceGraphSliderValueSpan.textContent = forceGraphSlider.value; });
-        forceGraphSlider.addEventListener('change', async () => { // Make async
+        forceGraphSlider.addEventListener('change', async () => { 
             currentForceGraphTopN = parseInt(forceGraphSlider.value, 10); forceGraphSliderValueSpan.textContent = currentForceGraphTopN; console.log(`Force Graph TopN changed to: ${currentForceGraphTopN}`);
-            // Determine data based on current zoom level (if any) or full view
             let dataForForceGraph;
-            const currentDomain = lineGraphXScale?.domain(); // Get current displayed domain
+            const currentDomain = lineGraphXScale?.domain(); 
 
             if(currentDomain && currentDomain.length === 2) {
                 const [currentStart, currentEnd] = currentDomain;
                 const filterStart = d3.timeDay.floor(currentStart);
-                // Use exclusive end date for filtering to match brush behavior
                 const filterEnd = d3.timeDay.offset(d3.timeDay.floor(currentEnd), 1);
-                // Filter the data currently backing the main graph (currentViewData)
                 dataForForceGraph = currentViewData.filter(d => d.ts >= filterStart && d.ts < filterEnd);
                  console.log(`Updating Force Graph based on current graph zoom (${dataForForceGraph.length} records)`);
-            } else { // Fallback to full view data if zoom isn't active/valid
+            } else { 
                 dataForForceGraph = currentViewData;
                 console.log(`Updating Force Graph based on main view data (${dataForForceGraph.length} records)`);
             }
-            // Re-render only the force graph
             const fgContainer = document.getElementById('force-graph-chart');
             if (dataForForceGraph && dataForForceGraph.length > 0) {
-                await drawForceGraph2(dataForForceGraph, 'force-graph-chart', currentForceGraphTopN); // Await if async
+                await drawForceGraph2(dataForForceGraph, 'force-graph-chart', currentForceGraphTopN); 
             } else {
                console.log("Slider changed, but no data for force graph.");
                if(fgContainer) fgContainer.innerHTML = '<p class="empty-message">Select data to see transitions.</p>';
@@ -828,6 +804,3 @@ function setupEventListeners() {
     console.log("Event listeners attached.");
 }
 
-// ============================================== //
-// === END OF wrapped_final.js ================== //
-// ============================================== //
