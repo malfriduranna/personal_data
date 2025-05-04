@@ -690,7 +690,7 @@ async function handleBrushUpdate(filteredChartData) {
         await Promise.all([
             updateTopArtistsAsText(dataToUpdate),
             updateTopTracksAsText(dataToUpdate),
-            drawStreamgraph(dataToUpdate, "streamgraph-chart"), 
+            // drawStreamgraph(dataToUpdate, "streamgraph-chart"), 
             drawForceGraph2(dataToUpdate, "force-graph-chart", currentForceGraphTopN)
         ]);
         updateTimeOfDayChart(dataToUpdate);
