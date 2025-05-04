@@ -4,11 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wrapped Dashboard</title>
-    <!-- Link your main stylesheet -->
     <link rel="stylesheet" href="style.css" />
-    <!-- Link specific CSS for dashboard layout if needed -->
     <link rel="stylesheet" href="css/dashboard-layout.css" />
-    <!-- Other CSS links -->
     <link rel="stylesheet" href="css/controls.css" />
     <link rel="stylesheet" href="css/charts.css" />
     <link rel="stylesheet" href="css/header.css" />
@@ -19,10 +16,8 @@
     <link rel="stylesheet" href="css/button.css" />
     <link rel="stylesheet" href="css/tooltip.css" />
     <link rel="stylesheet" href="css/top-lists.css" />
-    <!-- Optional: Add CSS for the slider -->
     <link rel="stylesheet" href="css/slider.css" />
 
-    <!-- D3 Libraries -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
   </head>
@@ -30,7 +25,6 @@
     <div id="header-placeholder"></div>
 
     <main class="main">
-      <!-- Section for Controls -->
       <section>
         <h2>View Controls</h2>
         <div class="controls main-controls">
@@ -51,7 +45,6 @@
         </div>
       </section>
 
-      <!-- *** NEW Section for Top Lists (Side-by-Side) *** -->
       <section class="dashboard-section top-lists-section row">
           <!-- Top Artists Card -->
           <div class="top-list-container card" id="top-artists-container">
@@ -64,20 +57,17 @@
             <div id="top-tracks-chart" class="chart-container-small"></div>
           </div>
       </section>
-      <!-- *** End of Top Lists Section *** -->
 
 
-      <!-- *** Section for Main Trend Chart (Now Below Top Lists) *** -->
       <section class="dashboard-section main-trend-section">
         <div class="main-chart-wrapper card">
           <h2>Daily Listening Trend</h2>
-          <div id="calendar"></div> <!-- Line graph renders here -->
+          <div id="calendar"></div> 
           <div class="filter-info">
             Current Selection: <span id="current-filter-info">Loading...</span>
           </div>
         </div>
       </section>
-      <!-- *** End of Main Trend Section *** -->
 
 
       <!-- Section for Time/Day Row -->
@@ -91,7 +81,7 @@
         </div>
         <div class="chart-container card" id="day-of-week-container">
           <h2>Day of Week</h2>
-          <div id="day-of-week-chart"></div> <!-- Text list will render here -->
+          <div id="day-of-week-chart"></div> 
           <p class="chart-description">
             Total listening time distribution by day.
           </p>
@@ -99,7 +89,6 @@
       </section>
 
 
-      <!-- Section for Stream/Force Row -->
       <section class="dashboard-section charts-row-section row">
 
         <div class="chart-container card">
@@ -118,18 +107,15 @@
       </section>
 
 
-      <!-- Tooltip remains outside sections -->
       <div id="tooltip" class="tooltip"></div>
 
     </main>
 
     <div id="footer-placeholder"></div>
 
-    <!-- Load the script -->
     <script src="scripts/wrapped_page.js" type="module" defer></script>
 
     <script>
-      // Component Loading Script (remains the same)
       function loadComponent(url, placeholderId) {
         fetch(url)
           .then((response) => {
