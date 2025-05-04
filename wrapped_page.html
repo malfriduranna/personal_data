@@ -81,31 +81,27 @@
             Current Selection: <span id="current-filter-info">Loading...</span>
           </div>
         </div>
-        <div class="chart-container card" id="time-of-day-container">
-          <h2>Time of Day</h2>
-          <div id="time-of-day-chart"></div>
-          <p class="chart-description"> <!-- Added p tags back -->
-            Total listening time distribution by hour.
-          </p>
-        </div>
-        <div class="chart-container card" id="day-of-week-container">
-          <h2>Day of Week</h2>
-          <div id="day-of-week-chart"></div>
-          <p class="chart-description"> <!-- Added p tags back -->
-            Total listening time distribution by day.
-          </p>
-        </div>
+
       </section>
+
+      <div class="chart-container card" id="time-of-day-container">
+        <h2>Time of Day</h2>
+        <div id="time-of-day-chart"></div>
+        <p class="chart-description"> <!-- Added p tags back -->
+          Total listening time distribution by hour.
+        </p>
+      </div>
+      <div class="chart-container card" id="day-of-week-container">
+        <h2>Day of Week</h2>
+        <div id="day-of-week-chart"></div>
+        <p class="chart-description"> <!-- Added p tags back -->
+          Total listening time distribution by day.
+        </p>
+      </div>
 
       <!-- Section for Row Charts (Stream/Force) -->
       <section class="dashboard-section charts-row-section">
-        <div class="chart-container card">
-          <h2>Music vs Podcast Rate</h2>
-          <div id="streamgraph-chart"></div>
-          <p class="chart-description"> <!-- Added p tags back -->
-            Proportional listening time (%) for selected period.
-          </p>
-        </div>
+
         <div class="chart-container card"> <!-- Force Graph Card -->
           <h2>Artist Transitions</h2>
 
@@ -132,7 +128,7 @@
     <div id="footer-placeholder"></div>
 
     <!-- Load the script as a module -->
-    <script src="scripts/spotifyDashboard.js" type="module" defer></script>
+    <script src="scripts/wrapped_final.js" type="module" defer></script>
 
     <script>
       function loadComponent(url, placeholderId) {
