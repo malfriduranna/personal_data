@@ -20,10 +20,12 @@
     <link rel="stylesheet" href="css/tooltip.css" />
     <link rel="stylesheet" href="css/top-lists.css" />
     <!-- Optional: Add CSS for the slider -->
-    <link rel="stylesheet" href="css/slider.css" />
+    <link rel="stylesheet" href="css/slider.css" /> <!-- CREATE THIS FILE if needed -->
+
 
     <!-- D3 Libraries -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Sankey library no longer needed for current charts, but harmless to keep -->
     <script src="https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
   </head>
   <body>
@@ -51,85 +53,84 @@
         </div>
       </section>
 
-      <!-- *** NEW Section for Top Lists (Side-by-Side) *** -->
-      <section class="dashboard-section top-lists-section row">
-          <!-- Top Artists Card -->
+      <!-- Section for Calendar + Top Lists -->
+      <section class="dashboard-section calendar-top-section">
+        <div class="top-lists-wrapper">
+          <!-- Top Artists Card - Container changed to DIV -->
           <div class="top-list-container card" id="top-artists-container">
             <h2>Top 5 Artists</h2>
-            <div id="top-artists-chart" class="chart-container-small"></div>
+            <div id="top-artists-chart" class="chart-container-small"></div> <!-- Now a div -->
           </div>
           <!-- Top Tracks Card -->
           <div class="top-list-container card" id="top-tracks-container">
             <h2>Top 5 Tracks</h2>
+            <!-- Container for track bar chart -->
+            <!-- Removed old classes, added chart-container-small for consistency -->
             <div id="top-tracks-chart" class="chart-container-small"></div>
           </div>
+        </div>
       </section>
-      <!-- *** End of Top Lists Section *** -->
 
-
-      <!-- *** Section for Main Trend Chart (Now Below Top Lists) *** -->
-      <section class="dashboard-section main-trend-section">
-        <div class="main-chart-wrapper card">
-          <h2>Daily Listening Trend</h2>
-          <div id="calendar"></div> <!-- Line graph renders here -->
+      <!-- Section for Row Charts (Time/Day) -->
+      <section class="dashboard-section charts-row-section">
+        <div class="calendar-wrapper card">
+          <h2>Daily Listening Heatmap</h2>
+          <div id="calendar"></div>
+          <div id="legend"></div>
           <div class="filter-info">
             Current Selection: <span id="current-filter-info">Loading...</span>
           </div>
         </div>
-      </section>
-      <!-- *** End of Main Trend Section *** -->
 
-
-      <!-- Section for Time/Day Row -->
-      <section class="dashboard-section charts-row-section row">
-        <div class="chart-container card" id="time-of-day-container">
-          <h2>Time of Day</h2>
-          <div id="time-of-day-chart"></div>
-          <p class="chart-description">
-            Total listening time distribution by hour.
-          </p>
-        </div>
-        <div class="chart-container card" id="day-of-week-container">
-          <h2>Day of Week</h2>
-          <div id="day-of-week-chart"></div> <!-- Text list will render here -->
-          <p class="chart-description">
-            Total listening time distribution by day.
-          </p>
-        </div>
       </section>
 
+      <div class="chart-container card" id="time-of-day-container">
+        <h2>Time of Day</h2>
+        <div id="time-of-day-chart"></div>
+        <p class="chart-description"> <!-- Added p tags back -->
+          Total listening time distribution by hour.
+        </p>
+      </div>
+      <div class="chart-container card" id="day-of-week-container">
+        <h2>Day of Week</h2>
+        <div id="day-of-week-chart"></div>
+        <p class="chart-description"> <!-- Added p tags back -->
+          Total listening time distribution by day.
+        </p>
+      </div>
 
-      <!-- Section for Stream/Force Row -->
-      <section class="dashboard-section charts-row-section row">
+      <!-- Section for Row Charts (Stream/Force) -->
+      <section class="dashboard-section charts-row-section">
 
-        <div class="chart-container card">
+        <div class="chart-container card"> <!-- Force Graph Card -->
           <h2>Artist Transitions</h2>
+
+          <!-- START: Added Slider Control -->
           <div class="chart-controls force-graph-controls">
              <label for="forceGraphSlider" class="slider-label">Top Artists:</label>
              <input type="range" id="forceGraphSlider" name="forceGraphTopN"
                     min="3" max="20" value="5" step="1" class="slider-input">
              <span id="forceGraphSliderValue" class="slider-value">5</span>
           </div>
-          <div id="force-graph-chart"></div>
-          <p class="chart-description">
+          <!-- END: Added Slider Control -->
+
+          <div id="force-graph-chart"></div> <!-- Existing chart div -->
+          <p class="chart-description"> <!-- Added p tags back -->
             Transitions between top artists in selected period.
           </p>
         </div>
       </section>
 
-
       <!-- Tooltip remains outside sections -->
-      <div id="tooltip" class="tooltip"></div>
-
+      <div id="tooltip" class="tooltip"></div> <!-- Added tooltip class -->
     </main>
 
     <div id="footer-placeholder"></div>
 
-    <!-- Load the script -->
-    <script src="scripts/wrapped_page.js" type="module" defer></script>
+    <!-- Load the script as a module -->
+    <script src="scripts/wrapped_final.js" type="module" defer></script>
 
     <script>
-      // Component Loading Script (remains the same)
       function loadComponent(url, placeholderId) {
         fetch(url)
           .then((response) => {
@@ -152,6 +153,8 @@
             console.error(`Error loading component ${url}:`, error)
           );
       }
+    
+      // Call the component loaders immediately
       loadComponent("header.html", "header-placeholder");
       loadComponent("footer.html", "footer-placeholder");
     </script>

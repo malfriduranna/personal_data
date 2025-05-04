@@ -1,7 +1,8 @@
+<!-- START OF FILE index.html -->
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Listening</title>
+    <title>Spotify Listening</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <link rel="stylesheet" href="style.css" />
@@ -15,9 +16,7 @@
     <link rel="stylesheet" href="css/top-artists.css"/>
     <link rel="stylesheet" href="css/charts.css"/>
     <link rel="stylesheet" href="css/messages.css"/>
-    <link rel="stylesheet" href="css/button.css" />
-    <link rel="stylesheet" href="css/dashboard-layout.css"> <!-- NEW -->
-    <link rel="stylesheet" href="css/top-lists.css"/> <!-- NEW -->
+
   </head>
   <body>
     <div class="layout">
@@ -25,36 +24,28 @@
       <div id="header-placeholder"></div>
 
       <main class="main">
-        <!-- Keep the main section heading -->
         <section class="info">
           <h1>Discover your listening trend</h1>
-
-          <!-- NEW: Container for the feature boxes -->
-          <div class="features-container">
-
-            <!-- Box 1: Spotify Wrapped -->
-            <div class="feature-box">
-              <h3><a href="wrapped_page.html">Wrapped</a></h3>
-              <p>
-                View a personalized dashboard summarizing your listening trends, top artists, and tracks over specific periods. See heatmaps, time-of-day patterns, and more.
-              </p>
-            </div>
-
-            <!-- Box 2: Dive Deeper -->
-            <div class="feature-box">
-              <h3><a href="dive_deeper.html">Dive Deeper</a></h3>
-              <p>
-                Analyze your listening patterns for a single artist in detail. Explore song and album distributions through interactive charts like scatter plots and sunbursts.
-              </p>
-            </div>
-
-          </div> <!-- End of features-container -->
-
+          <div class="info_text">
+            <p>Welcome to your Spotify Trends & Habits Analyzer!</p>
+            <p>
+              Discover how you listen to music—track your top artists, explore
+              seasonal trends, and see when you hit play the most. Compare
+              different time periods, uncover shifts in your music taste, and
+              dive into interactive charts for a fun and insightful look at your
+              listening habits. Ready to explore your music journey?
+            </p>
+          </div>
         </section>
 
         <section class="overview">
           <h1>Overview</h1>
           <div class="top_overview" id="include-overview"></div>
+        </section>
+
+        <section id="wrapped-section">
+          <h1>Spotify Listening Dashboard</h1>
+          <div id="include-wrapped"></div>
         </section>
 
         <!-- Tooltip Div -->
@@ -64,40 +55,48 @@
       <!-- Footer Placeholder -->
       <div id="footer-placeholder"></div>
 
-    </div> 
+    </div>
 
     <!-- Scripts to load included content -->
     <script>
-      fetch("index_overview.html") 
+      fetch("index_overview.html")
         .then((response) => response.text())
         .then((data) => {
           const overviewContainer = document.getElementById("include-overview");
           if (overviewContainer) {
               overviewContainer.innerHTML = data;
+              // Load the associated script after the HTML is injected
               const script = document.createElement("script");
               script.src = "scripts/get_overview.js";
-              setTimeout(() => document.body.appendChild(script), 0);
+              script.type = "module";
+              // Append the script directly. The browser will parse the innerHTML before executing it.
+              // Removed the setTimeout(0) as it's not strictly necessary here and can sometimes
+              // lead to unexpected timing if the script relies on immediate DOM parsing after innerHTML.
+              document.body.appendChild(script);
           }
         })
         .catch(error => console.error('Error loading overview:', error));
 
-      // fetch("wrapped_page.html")
-      //   .then((response) => response.text())
-      //   .then((html) => {
-      //     const wrappedContainer = document.getElementById("include-wrapped");
-      //     if (wrappedContainer) {
-      //         const wrapped = new DOMParser().parseFromString(html, "text/html");
-      //         const wrappedMain = wrapped.querySelector("main"); 
-      //         if (wrappedMain) {
-      //           wrappedContainer.innerHTML = wrappedMain.innerHTML;
-      //           const script = document.createElement("script");
-      //           script.src = "scripts/spotifyDashboard.js";
-      //           script.type = "module";
-      //           setTimeout(() => document.body.appendChild(script), 0);
-      //         }
-      //     }
-      //   })
-      //   .catch(error => console.error('Error loading wrapped page:', error));
+      fetch("wrapped_page.html")
+        .then((response) => response.text())
+        .then((html) => {
+          const wrappedContainer = document.getElementById("include-wrapped");
+          if (wrappedContainer) {
+              const wrapped = new DOMParser().parseFromString(html, "text/html");
+              const wrappedMain = wrapped.querySelector("main");
+              if (wrappedMain) {
+                wrappedContainer.innerHTML = wrappedMain.innerHTML;
+                // Load the associated script after the HTML is injected
+                const script = document.createElement("script");
+                script.src = "scripts/spotifyDashboardtext.js";
+                script.type = "module";
+                // Append the script directly, similar to the overview script.
+                // Removed the setTimeout(0).
+                document.body.appendChild(script);
+              }
+          }
+        })
+        .catch(error => console.error('Error loading wrapped page:', error));
     </script>
 
     <!-- Script to load Header and Footer -->
@@ -120,7 +119,7 @@
           })
           .catch(error => console.error(`Error loading component ${url}:`, error));
       }
-    
+
       // Call the component loaders immediately
       loadComponent('header.html', 'header-placeholder');
       loadComponent('footer.html', 'footer-placeholder');
@@ -128,3 +127,4 @@
 
   </body>
 </html>
+<!-- END OF FILE index.html -->
