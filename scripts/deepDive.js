@@ -849,15 +849,14 @@ function updateScatterPlot(data, artistName) {
       .style("font-size", "var(--font-small-size)")
       .style("color", "var(--black)")
       .style("margin-bottom", "var(--spacing)")
-      .style("padding", "var(--spacing)")
+      .style("margin-top", "calc(var(--spacing)")
+      .style("font-style", "italic")
       .html(
-        `<p>Each dot represents a song. The x-axis shows the most minutes you listened to it in any year (binge),
-       and the y-axis shows in how many months you returned to it (consistency).</p>
-       <p><strong>Click a dot to see more details about that song.</strong></p>`
+        `<p>Click on the dots to explore more details about each song.</p>`
       );
   }
 
-  const margin = { top: 20, right: 20, bottom: 50, left: 50 },
+  const margin = { top: 40, right: 40, bottom: 25, left: 50 },
     innerWidth = 550 - margin.left - margin.right,
     innerHeight = 300 - margin.top - margin.bottom;
 
@@ -1255,7 +1254,7 @@ function updateSongDistPlot(trackData) {
     .style("display", "flex")
     .style("flex-direction", "column")
     .style("justify-content", "space-between")
-    .style("margin-top", "10px")
+    .style("margin-top", "var(--spacing)")
     .style("flex", "1");
 
   infoDiv
@@ -1314,56 +1313,69 @@ function updateSongDistPlot(trackData) {
     // Binge months logic
     let bingeMonths = "";
     const threshold = d3.max(trackData.monthlyPlayMap, (d) => d.minutes) * 0.75;
+    
+    // Binge month detection
     const topMonthsRaw = trackData.monthlyPlayMap.filter((d) => d.minutes >= threshold);
     const topMonths = topMonthsRaw.map((m) => d3.timeFormat("%b %Y")(new Date(`${m.month}-01`)));
-
+    
     let consecutive = false;
     if (topMonthsRaw.length > 1) {
       const timestamps = topMonthsRaw
         .map((d) => new Date(`${d.month}-01`).getTime())
         .sort((a, b) => a - b);
-
       consecutive = timestamps.every((t, i, arr) =>
         i === 0 ? true : t - arr[i - 1] <= 35 * 24 * 60 * 60 * 1000
       );
     }
-
+    
     if (topMonths.length > 0) {
       const joiner = topMonths.length === 1 ? topMonths[0] : topMonths.join(", ");
       bingeMonths = `You binge-listened to this track most during <strong>${joiner}</strong>. `;
       bingeMonths += consecutive
-        ? "These were mostly consecutive months. "
-        : "These months were spread out. ";
+        ? "Those months were back-to-back – a real phase."
+        : "Those months were spread out over time.";
     }
-
-    // Summary text logic
+    
+    // Base stats
     let summarySentence = "";
     const consistency = +trackData.consistency;
     const maxMinutes = +trackData.mostPlayedYearEntry;
-    const maxAcrossArtist = d3.max(trackData.allTrackStats, (d) => d.maxMinutesInYear || 0);
-    const relativePlay = maxMinutes / maxAcrossArtist;
-
-    if (consistency > 75 && relativePlay > 0.85) {
-      summarySentence = "This was likely a favorite from this artist – played heavily and consistently over time.";
-    } else if (consistency > 50 && relativePlay <= 0.85) {
-      summarySentence = "You returned to this song often – a steady part of your music habits, even if not a top binge.";
+    const allMax = d3.max(trackData.allTrackStats, (d) => d.maxMinutesInYear || 0);
+    const relativePlay = maxMinutes / allMax;
+    const isLowPlayed = relativePlay < 0.1;
+    const isVeryLowPlayed = relativePlay < 0.3;
+    
+    // Personalized categories
+    if (isLowPlayed && consistency < 25) {
+      summarySentence = "This song has never been listened to much – barely made it onto your radar.";
+    } else if (consistency > 85 && maxMinutes < allMax * 0.35) {
+      summarySentence = "You didn’t listen to this one heavily, but it kept coming back – quiet consistency.";
+    } else if (consistency > 75 && relativePlay > 0.85) {
+      summarySentence = "This was likely a favorite from this artist – played often and with strong consistency.";
+    } else if (consistency > 60 && relativePlay > 0.65) {
+      summarySentence = "You gave this song steady attention and played it frequently. A clear favorite.";
     } else if (consistency < 50 && relativePlay > 0.85) {
-      summarySentence = `${bingeMonths}You had a strong, short-term obsession with this song.`;
-    } else if (consistency < 40 && relativePlay < 0.5) {
-      summarySentence = "You sampled this song a bit, but it didn’t become a regular or intense listen.";
-    } else if (consistency >= 40 && consistency <= 75 && relativePlay >= 0.5) {
-      summarySentence = "This track sat somewhere in the middle – you played it regularly and had some strong moments with it.";
+      summarySentence = `${bingeMonths} You had a strong, short-term obsession with this song.`;
+    } else if (consistency >= 40 && consistency <= 75 && relativePlay >= 0.4 && relativePlay <= 0.7) {
+      summarySentence = "This track sat somewhere in the middle – you came back to it a few times and had moments of deeper listening.";
+    } else if (consistency >= 30 && consistency <= 60 && relativePlay <= 0.4) {
+      summarySentence = "You listened to this a few times, but it didn’t really stick.";
+    } else if (consistency < 35 && relativePlay < 0.5) {
+      summarySentence = "You sampled this song here and there, but it didn’t become part of your rotation.";
     } else {
-      summarySentence = "You listened to this song on and off, but it wasn’t a standout in your library.";
+      summarySentence = "You listened to this on and off, but it wasn’t a standout in your library.";
     }
+    
 
     const songInfoDiv = infoDiv
       .append("div")
       .attr("class", "songInfoDiv")
       .style("display", "flex")
-      .style("margin", "auto")      
+      .style("margin", "auto")
+      .style("margin-top", "calc(var(--spacing)/2)")
       .style("flex-direction", "column")
       .style("padding", "var(--spacing)")
+      .style("text-align", "justify")
       .style("background", "rgba(76, 175, 79, 0.1)")
       .style("border-radius", "var(--border-radius-small)")
       .style("border", "1px solid rgb(221, 221, 221)")
@@ -1380,9 +1392,10 @@ function updateSongDistPlot(trackData) {
           }</strong> you played the song at its peak, reaching <strong>${trackData.maxMinutes.toFixed(
             1
           )} minutes</strong> in a single day.</p>` +
-          `<p>The year in which you enjoyed it most was <strong>${trackData.mostPlayedYear}</strong>, and you tend to listen most during the <strong>${trackData.mostFrequentPeriod}</strong>.</p>` +
           `<p>${summarySentence}</p>`
       );
+
+    //          `<p>The year in which you enjoyed it most was <strong>${trackData.mostPlayedYear}</strong>, and you tend to listen most during the <strong>${trackData.mostFrequentPeriod}</strong>.</p>`
 
     const plotContainer = songInfoDiv
       .append("div")
@@ -1394,32 +1407,33 @@ function updateSongDistPlot(trackData) {
 
   function drawSongPlot(container, trackData) {
     container.html("");
-
+  
     const width = 240;
     const height = 85;
-    const margin = { top: 5, right: 10, bottom: 15, left: 15 };
-
+    const margin = { top: 5, right: 10, bottom: 15, left: 18 };
+  
+    // Create an SVG inside the container
     const svg = container
       .append("svg")
       .attr("viewBox", `0 0 ${width} ${height}`)
       .attr("preserveAspectRatio", "xMidYMid meet")
       .style("width", "100%")
       .style("height", "auto");
-
+  
     const group = svg
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
-
+  
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
-
+  
     const extent = d3.extent(trackData.rawData, (d) => new Date(d.ts));
     const totalDays = (extent[1] - extent[0]) / (1000 * 60 * 60 * 24);
-
+  
     let binFn = d3.timeMonth;
     if (totalDays <= 30) binFn = d3.timeDay;
     else if (totalDays <= 180) binFn = d3.timeWeek;
-
+  
     const grouped = d3
       .rollups(
         trackData.rawData,
@@ -1427,39 +1441,98 @@ function updateSongDistPlot(trackData) {
         (d) => binFn(new Date(d.ts))
       )
       .map(([date, minutes]) => ({ date, minutes }));
-
+  
     grouped.sort((a, b) => a.date - b.date);
-
+  
     const x = d3.scaleTime().domain(d3.extent(grouped, (d) => d.date)).range([0, innerWidth]);
     const y = d3.scaleLinear().domain([0, d3.max(grouped, (d) => d.minutes)]).nice().range([innerHeight, 0]);
-
+  
+    // Tooltip div (attached to body!)
+    const tooltip = d3.select("body")
+      .append("div")
+      .attr("class", "song-tooltip")
+      .style("position", "absolute")
+      .style("pointer-events", "none")
+      .style("background", "#fff")
+      .style("border", "1px solid #ccc")
+      .style("padding", "4px 6px")
+      .style("font-size", "10px")
+      .style("border-radius", "4px")
+      .style("opacity", 0);
+  
+    // Axes
     group
       .append("g")
       .attr("transform", `translate(0,${innerHeight})`)
-      .call(d3.axisBottom(x).ticks(5).tickFormat(d3.timeFormat("%b %d")))
+      .call(
+        d3.axisBottom(x)
+          .ticks(5)
+          .tickFormat((d, i, nodes) => {
+            const date = new Date(d);
+            const prevDate = i > 0 ? new Date(nodes[i - 1].__data__) : null;
+            const showYear = !prevDate || date.getFullYear() !== prevDate.getFullYear();
+            return showYear ? d3.timeFormat("%b '%y")(date) : d3.timeFormat("%b")(date);
+          })
+      )
       .selectAll("text")
       .style("font-size", "5px");
-
+  
     group
       .append("g")
       .call(d3.axisLeft(y).ticks(4))
       .selectAll("text")
       .style("font-size", "5px");
-
+  
     const area = d3
       .area()
       .x((d) => x(d.date))
       .y0(innerHeight)
       .y1((d) => y(d.minutes));
-
-    group.append("path").datum(grouped).attr("fill", "rgba(255,255,255,0.6)").attr("d", area);
-
+  
+    group.append("path")
+      .datum(grouped)
+      .attr("fill", "rgba(255,255,255,0.6)")
+      .attr("d", area);
+  
     const line = d3
       .line()
       .x((d) => x(d.date))
       .y((d) => y(d.minutes));
-    group.append("path").datum(grouped).attr("fill", "none").attr("stroke", "#4caf50").attr("stroke-width", 2).attr("d", line);
+  
+    group.append("path")
+      .datum(grouped)
+      .attr("fill", "none")
+      .attr("stroke", "#4caf50")
+      .attr("stroke-width", 2)
+      .attr("d", line);
+  
+    // Transparent rect for capturing mouse events
+    group.append("rect")
+      .attr("width", innerWidth)
+      .attr("height", innerHeight)
+      .attr("fill", "transparent")
+      .on("mousemove", function (event) {
+        const [mx] = d3.pointer(event, this);
+        const hoveredDate = x.invert(mx);
+  
+        const bisect = d3.bisector(d => d.date).left;
+        const idx = bisect(grouped, hoveredDate);
+        const d0 = grouped[idx - 1];
+        const d1 = grouped[idx];
+        const d = !d0 ? d1 : !d1 ? d0 : (hoveredDate - d0.date > d1.date - hoveredDate ? d1 : d0);
+  
+        tooltip
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 20) + "px")
+          .style("opacity", 1)
+          .html(
+            `${d3.timeFormat("%b %Y")(d.date)}<br/>${d.minutes.toFixed(1)} min`
+          );
+      })
+      .on("mouseout", () => tooltip.style("opacity", 0));
   }
+  
+  
 
   if (trackData.spotify_track_uri) {
     const trackId = trackData.spotify_track_uri.split(":")[2];
@@ -1475,7 +1548,6 @@ function updateSongDistPlot(trackData) {
     renderDetails();
   }
 }
-
 
 /***********************
  * Sunburst Chart with Drill-Down for Song Distribution
@@ -1684,7 +1756,7 @@ function updateSunburstChart(data, artistName) {
     .on("click", function (event, d) {
       if (d.depth === 1) {
         drillDownState.selectedAlbum = d.data.name;
-    
+
         paths
           .transition()
           .duration(200)
@@ -1698,7 +1770,8 @@ function updateSunburstChart(data, artistName) {
                 .ancestors()
                 .some(
                   (a) =>
-                    a.depth === 1 && a.data.name === drillDownState.selectedAlbum
+                    a.depth === 1 &&
+                    a.data.name === drillDownState.selectedAlbum
                 )
             ) {
               let albumNode = p.ancestors().find((a) => a.depth === 1);
@@ -1712,14 +1785,15 @@ function updateSunburstChart(data, artistName) {
               : "#fff"
           )
           .attr("stroke-width", (p) =>
-            p.depth === 1 && p.data.name === drillDownState.selectedAlbum ? 4 : 1
+            p.depth === 1 && p.data.name === drillDownState.selectedAlbum
+              ? 4
+              : 1
           );
-  
+
         detailBox.style("display", "block");
         updateAlbumInfo(d.data.name, artistData, detailBox);
       }
     });
-  
 
   // Arched labels along the outer edge for top 2–3 albums (≥20%)
   const totalValue = root.value;
@@ -2009,6 +2083,7 @@ function updateAlbumInfo(selectedAlbum, artistData, detailBox) {
       .style("background", "rgba(76, 175, 79, 0.1)")
       .style("border-radius", "var(--border-radius-small)")
       .style("border", "1px solid rgb(221, 221, 221)")
+      .style("margin-top", "var(--spacing)")
       .style("width", "100%")
       .style("font-size", "var(--font-small-size)")
       .html(
