@@ -2492,16 +2492,7 @@ function initArtistSearch(data) {
 /***********************
  * Event Listener for Applying Date Range
  ***********************/
-document.getElementById("applyRangeBtn").addEventListener("click", () => {
-  const startDate = new Date(document.getElementById("startDate").value);
-  const endDate = new Date(document.getElementById("endDate").value);
-  if (isNaN(startDate) || isNaN(endDate)) return;
-  const filteredData = window.allParsedData.filter((d) => {
-    const date = new Date(d.ts);
-    return date >= startDate && date <= endDate;
-  });
-  updateAllCharts(filteredData, currentArtistName);
-});
+
 
 // Toggle the Song Distribution (Scatter Plot) container
 document.getElementById("toggleSong").addEventListener("change", function () {

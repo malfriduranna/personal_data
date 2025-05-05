@@ -25,8 +25,10 @@
     <div id="header-placeholder"></div>
 
     <main class="main">
+      <section class="info">
+        <h1>Spotify Wrapped</h1>
+      </section>
       <section>
-        <h2>View Controls</h2>
         <div class="controls main-controls">
           <div>
             <label for="wrappedYearSelect">Quick Select Year:</label>
@@ -42,6 +44,16 @@
             <input type="date" id="endDate" />
           </div>
           <button id="applyRangeBtn" class="button">Apply Range</button>
+          <button id="resetRangeBtn" style="margin-left: 10px;" class="button">Reset Time</button>
+        </div>
+      </section>
+
+      <section class="row">
+        <div class="full_width">
+          <div id="calendar"></div> 
+          <div class="filter-info">
+            Current Selection: <span id="current-filter-info">Loading...</span>
+          </div>
         </div>
       </section>
 
@@ -56,17 +68,6 @@
             <h2>Top 5 Tracks</h2>
             <div id="top-tracks-chart" class="chart-container-small"></div>
           </div>
-      </section>
-
-
-      <section class="dashboard-section main-trend-section">
-        <div class="main-chart-wrapper card">
-          <h2>Daily Listening Trend</h2>
-          <div id="calendar"></div> 
-          <div class="filter-info">
-            Current Selection: <span id="current-filter-info">Loading...</span>
-          </div>
-        </div>
       </section>
 
 
