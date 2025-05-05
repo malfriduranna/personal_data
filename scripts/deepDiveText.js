@@ -1078,10 +1078,18 @@ function updateScatterPlot(data, artistName) {
     .append("div")
     .style("margin-bottom", "1em")
     .html(
-      `<p style="margin:0">Your most <strong>loyal song</strong> was <span class="clickable" style="color:var(--dark-green-color); cursor:pointer; font-weight:bold;">${loyalTrack.track}</span>,</p>
-       <p style="margin:0">played for a total of ${loyalTrack.totalMinutes.toFixed(1)} minutes.</p>
-       <p style="margin:0; margin-top:0.5em">Your most <strong>binge-listened</strong> song was <span class="clickable" style="font-weight:bold; color:var(--dark-green-color); cursor:pointer">${bingeTrack.track}</span>,</p>
-       <p style="margin:0">played for ${bingeTrack.maxMinutesYear.toFixed(1)} minutes in a single year.</p>`
+      `<p style="margin:0">Your most <strong>loyal song</strong> was <span class="clickable" style="color:var(--dark-green-color); cursor:pointer; font-weight:bold;">${
+        loyalTrack.track
+      }</span>,</p>
+       <p style="margin:0">played for a total of ${loyalTrack.totalMinutes.toFixed(
+         1
+       )} minutes.</p>
+       <p style="margin:0; margin-top:0.5em">Your most <strong>binge-listened</strong> song was <span class="clickable" style="font-weight:bold; color:var(--dark-green-color); cursor:pointer">${
+         bingeTrack.track
+       }</span>,</p>
+       <p style="margin:0">played for ${bingeTrack.maxMinutesYear.toFixed(
+         1
+       )} minutes in a single year.</p>`
     )
     .on("click", (event) => {
       const clicked = event.target.innerText;
@@ -1092,11 +1100,13 @@ function updateScatterPlot(data, artistName) {
       }
     });
 
-    
   textDiv.append("h4").text("Top Played Songs:");
 
   const dropdownContainer = textDiv.append("div").style("margin-bottom", "1em");
-  dropdownContainer.append("label").text("Sort by: ").style("margin-right", "0.5em");
+  dropdownContainer
+    .append("label")
+    .text("Sort by: ")
+    .style("margin-right", "0.5em");
   const sortSelect = dropdownContainer
     .append("select")
     .style("padding", "0.25em");
@@ -1147,8 +1157,12 @@ function updateScatterPlot(data, artistName) {
           .append("div")
           .style("font-size", "10px")
           .html(
-            `<p style="margin:0">Total Played: ${d.totalMinutes.toFixed(1)} mins</p>
-             <p style="margin:0">Max in a Year: ${d.maxMinutesYear.toFixed(1)} mins</p>`
+            `<p style="margin:0">Total Played: ${d.totalMinutes.toFixed(
+              1
+            )} mins</p>
+             <p style="margin:0">Max in a Year: ${d.maxMinutesYear.toFixed(
+               1
+             )} mins</p>`
           );
       });
   }
@@ -1164,7 +1178,6 @@ function updateScatterPlot(data, artistName) {
     if (selected) updateSongDistText(selected);
   }
 }
-
 
 /**
  * updateSongDist displays (or updates) an info box for the selected track.
@@ -1325,7 +1338,8 @@ function updateSunburstChart(data, artistName) {
   const artistData = data.filter(
     (d) =>
       d.master_metadata_album_artist_name &&
-      d.master_metadata_album_artist_name.toLowerCase() === artistName.toLowerCase() &&
+      d.master_metadata_album_artist_name.toLowerCase() ===
+        artistName.toLowerCase() &&
       d.master_metadata_album_album_name
   );
 
@@ -1368,7 +1382,7 @@ function updateSunburstChart(data, artistName) {
     .style("border-radius", "8px")
     .style("display", "flex")
     .style("flex-direction", "column")
-    .style("align-items", "center")
+    .style("align-items", "center");
 
   const albums = d3.groups(
     artistData,
@@ -1378,7 +1392,9 @@ function updateSunburstChart(data, artistName) {
   const albumStats = albums.map(([album, records]) => {
     const tracks = d3.groups(records, (d) => d.master_metadata_track_name);
     const totalMinutes = d3.sum(records, (d) => +d.ms_played / 60000);
-    const songCounts = tracks.map(([_, tr]) => d3.sum(tr, (d) => +d.ms_played / 60000));
+    const songCounts = tracks.map(([_, tr]) =>
+      d3.sum(tr, (d) => +d.ms_played / 60000)
+    );
     const oneSongDominance = Math.max(...songCounts) / totalMinutes;
     return {
       name: album,
@@ -1388,38 +1404,57 @@ function updateSunburstChart(data, artistName) {
     };
   });
 
-  const multiTrackAlbums = albumStats.filter(d => d.songCount > 1);
-  const topPlayedAlbum = d3.max(albumStats, d => d.totalMinutes);
-  const topPlayed = albumStats.find(d => d.totalMinutes === topPlayedAlbum);
+  const multiTrackAlbums = albumStats.filter((d) => d.songCount > 1);
+  const topPlayedAlbum = d3.max(albumStats, (d) => d.totalMinutes);
+  const topPlayed = albumStats.find((d) => d.totalMinutes === topPlayedAlbum);
 
-  const topTracksAlbum = d3.max(albumStats, d => d.songCount);
-  const mostTracks = albumStats.find(d => d.songCount === topTracksAlbum);
+  const topTracksAlbum = d3.max(albumStats, (d) => d.songCount);
+  const mostTracks = albumStats.find((d) => d.songCount === topTracksAlbum);
 
-  const topDominanceAlbum = d3.max(multiTrackAlbums, d => d.oneSongDominance);
-  const dominant = multiTrackAlbums.find(d => d.oneSongDominance === topDominanceAlbum);
+  const topDominanceAlbum = d3.max(multiTrackAlbums, (d) => d.oneSongDominance);
+  const dominant = multiTrackAlbums.find(
+    (d) => d.oneSongDominance === topDominanceAlbum
+  );
 
   const topAlbums = albumStats
     .slice()
     .sort((a, b) => d3.descending(a.totalMinutes, b.totalMinutes))
     .slice(0, 5);
 
-  const topAlbumsHTML = topAlbums.map(
-    (a, i) => `<p style="margin:0">${i + 1}. <span class="clickable" style="font-weight:bold; color:var(--black-color); cursor:pointer;">${a.name}</span> (${a.totalMinutes.toFixed(1)} min, ${a.songCount} song${a.songCount > 1 ? 's' : ''})</p>`
-  ).join("");
+  const topAlbumsHTML = topAlbums
+    .map(
+      (a, i) =>
+        `<p style="margin:0">${
+          i + 1
+        }. <span class="clickable" style="font-weight:bold; color:var(--black-color); cursor:pointer;">${
+          a.name
+        }</span> (${a.totalMinutes.toFixed(1)} min, ${a.songCount} song${
+          a.songCount > 1 ? "s" : ""
+        })</p>`
+    )
+    .join("");
 
   infoBox
     .append("div")
-    .html(`
-      <p > Most <strong>played album</strong>: <span class="clickable" style="color:var(--dark-green-color); font-weight:bold; cursor:pointer;">${topPlayed.name}</span> (${topPlayed.totalMinutes.toFixed(1)} minutes)</p>
-      <p > Album with <strong>most songs played</strong>: <span class="clickable" style="color:var(--dark-green-color); font-weight:bold; cursor:pointer;">${mostTracks.name}</span> (${mostTracks.songCount} songs)</p>
-      <p> <strong>Most focused listening</strong>: <span class="clickable" style="color:var(--dark-green-color); font-weight:bold; cursor:pointer;">${dominant.name}</span> (${(dominant.oneSongDominance * 100).toFixed(1)}%)</p>
+    .html(
+      `
+      <p > Most <strong>played album</strong>: <span class="clickable" style="color:var(--dark-green-color); font-weight:bold; cursor:pointer;">${
+        topPlayed.name
+      }</span> (${topPlayed.totalMinutes.toFixed(1)} minutes)</p>
+      <p > Album with <strong>most songs played</strong>: <span class="clickable" style="color:var(--dark-green-color); font-weight:bold; cursor:pointer;">${
+        mostTracks.name
+      }</span> (${mostTracks.songCount} songs)</p>
+      <p> <strong>Most focused listening</strong>: <span class="clickable" style="color:var(--dark-green-color); font-weight:bold; cursor:pointer;">${
+        dominant.name
+      }</span> (${(dominant.oneSongDominance * 100).toFixed(1)}%)</p>
       <br>
       <p style="font-weight:bold"> Top Albums</p>
       ${topAlbumsHTML}
-    `)
+    `
+    )
     .on("click", (event) => {
       const clicked = event.target.innerText;
-      const names = albumStats.map(d => d.name);
+      const names = albumStats.map((d) => d.name);
       if (names.includes(clicked)) {
         drillDownState.selectedAlbum = clicked;
         updateAlbumInfo(clicked, artistData, detailBox);
@@ -1431,18 +1466,22 @@ function updateSunburstChart(data, artistName) {
   }
 }
 
-
-
 function updateAlbumInfo(selectedAlbum, artistData, detailBox) {
   const infoContainer = detailBox;
-  infoContainer.html("<p style='text-align:center; color:#555; font-style:italic;'>Loading album details…</p>");
+  infoContainer.html(
+    "<p style='text-align:center; color:#555; font-style:italic;'>Loading album details…</p>"
+  );
 
   const filtered = artistData.filter(
-    (d) => d.master_metadata_album_album_name.toLowerCase() === selectedAlbum.toLowerCase()
+    (d) =>
+      d.master_metadata_album_album_name.toLowerCase() ===
+      selectedAlbum.toLowerCase()
   );
 
   if (filtered.length === 0) {
-    infoContainer.html("<p class='empty-message'>No details available for the selected album.</p>");
+    infoContainer.html(
+      "<p class='empty-message'>No details available for the selected album.</p>"
+    );
     return;
   }
 
@@ -1514,13 +1553,22 @@ function updateAlbumInfo(selectedAlbum, artistData, detailBox) {
       .style("cursor", "pointer")
       .on("click", () => {
         drillDownState.selectedAlbum = null;
-        infoContainer.html("");
-        infoContainer.style("display", "none");
+        infoContainer.html("").style("display", "none");
+
+        // Reselect all paths and reset color/stroke
+        const sunburstPaths = d3
+          .select("#sunburstChart")
+          .select("div.sunburstSVG")
+          .select("svg")
+          .selectAll("path");
 
         d3.select("#sunburstChart")
           .select("div.sunburstSVG")
           .select("svg")
           .selectAll("path")
+          .filter(function (d) {
+            return d;
+          })
           .transition()
           .duration(200)
           .attr("fill", (d) => {
@@ -1528,7 +1576,10 @@ function updateAlbumInfo(selectedAlbum, artistData, detailBox) {
             while (current.depth > 1) current = current.parent;
             const albumName = current.data.name;
             if (!albumColorMap.has(albumName)) {
-              const index = hashStringToIndex(albumName, colorScale.range().length);
+              const index = hashStringToIndex(
+                albumName,
+                colorScale.range().length
+              );
               albumColorMap.set(albumName, colorScale(index));
             }
             return albumColorMap.get(albumName);
@@ -1553,12 +1604,21 @@ function updateAlbumInfo(selectedAlbum, artistData, detailBox) {
       .style("font-size", "var(--font-small-size)")
       .html(
         `<p>You first listened to this album on <strong>${minDate.toLocaleDateString()}</strong>.</p>` +
-        `<p>Total listening time: <strong>${totalAlbumMinutes.toFixed(1)} minutes</strong> across <strong>${totalAlbumPlays}</strong> plays.</p>` +
-        `<p>Your peak year was <strong>${peakYear}</strong> with <strong>${peakYearMinutes.toFixed(1)} minutes</strong>.</p>` +
-        `<br><p style="font-weight:bold;">Top Songs from this Album:</p>` +
-        topTracks.map(([track, minutes], i) =>
-          `<p style="margin:0;">${i + 1}. ${track} (${minutes.toFixed(1)} min)</p>`
-        ).join("")
+          `<p>Total listening time: <strong>${totalAlbumMinutes.toFixed(
+            1
+          )} minutes</strong> across <strong>${totalAlbumPlays}</strong> plays.</p>` +
+          `<p>Your peak year was <strong>${peakYear}</strong> with <strong>${peakYearMinutes.toFixed(
+            1
+          )} minutes</strong>.</p>` +
+          `<br><p style="font-weight:bold;">Top Songs from this Album:</p>` +
+          topTracks
+            .map(
+              ([track, minutes], i) =>
+                `<p style="margin:0;">${i + 1}. ${track} (${minutes.toFixed(
+                  1
+                )} min)</p>`
+            )
+            .join("")
       );
   }
 
@@ -1576,9 +1636,6 @@ function updateAlbumInfo(selectedAlbum, artistData, detailBox) {
     renderAlbumDetails();
   }
 }
-
-
-
 
 /***********************
  * Mood & Behavior Sankey with Hover Highlighting
